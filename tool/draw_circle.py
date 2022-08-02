@@ -1,3 +1,26 @@
+# -*- coding: utf-8 -*-
+"""
+/***************************************************************************
+ DrawSectorCircle 
+ SecQuery - A QGIS plugin
+ This plugin is used to render a circle with 16 wind-rose sectors and query 
+ the data in them.
+        begin                : 2022-07-31
+        git sha              : $Format:%H$
+        copyright            : (C) 2022 by Srividya Subramanian
+        email                : srividya.ssa@gmail.com
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+"""
+
 from qgis.core import *
 from qgis.gui import *
 from PyQt5.QtWidgets import *
@@ -9,13 +32,9 @@ pi = math.pi
 
 approot = QgsProject.instance().homePath()
 
-query_spec = importlib.util.spec_from_file_location("query_sector", approot+"/query-places/query_sector.py")
-query_sector_file = importlib.util.module_from_spec(query_spec)
-query_spec.loader.exec_module(query_sector_file)
-
-tool_spec = importlib.util.spec_from_file_location("tool", approot+"/utils/switch_tools.py")
-tool_file = importlib.util.module_from_spec(tool_spec)
-tool_spec.loader.exec_module(tool_file)
+from .query_sector import QuerySectorPlaces
+from secquery.util.switch_tools import switchPanTool, switchZoomTool
+from secquery.ui.input_dialog import InputDialog 
 
 class DrawSectorCircle(QgsMapTool):
     def __init__(self, canvas, iface):
@@ -25,9 +44,12 @@ class DrawSectorCircle(QgsMapTool):
         self.y = 0
         self.circle = QgsVectorLayer()
         self.line_layers = []
-        self.toolPan = tool_file.switchPanTool(self.canvas, self.iface, 'draw')
-        self.toolZoomIn = tool_file.switchZoomTool(self.canvas, self.iface, False, 'draw')
-        self.toolZoomOut = tool_file.switchZoomTool(self.canvas, self.iface, True, 'draw')
+        self.toolPan = switchPanTool(self.canvas, self.iface, 'draw')
+        self.toolZoomIn = switchZoomTool(self.canvas, self.iface, False, 'draw')
+        self.toolZoomOut = switchZoomTool(self.canvas, self.iface, True, 'draw')
+        inp = InputDialog()
+        if inp.exec_():
+            print(inp.data)
         QgsMapToolEmitPoint.__init__(self, self.canvas)
 
     def clearCanvas(self):
@@ -99,7 +121,7 @@ class DrawSectorCircle(QgsMapTool):
             self.iface.messageBar().pushMessage("Sectors Drawn",
                                            "Click on the sector for which you want to query places.\nPress 'Q' to Quit.\nPress 'L' to change Location.", level=Qgis.Success, duration=3)
 
-            query_places = query_sector_file.QuerySectorPlaces(
+            query_places = QuerySectorPlaces(
                 self.iface.mapCanvas(), self.iface, point, radius, self.line_layers, self.circle)
             self.iface.mapCanvas().setMapTool(query_places)
 
