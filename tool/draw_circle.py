@@ -36,7 +36,7 @@ from .query_sector import QuerySectorPlaces
 from secquery.util.switch_tools import switchPanTool, switchZoomTool
 from secquery.ui.input_dialog import InputDialog 
 
-class DrawSectorCircle(QgsMapTool):
+class DrawSectorCircle():
     def __init__(self, canvas, iface):
         self.canvas = canvas
         self.iface = iface
@@ -44,14 +44,10 @@ class DrawSectorCircle(QgsMapTool):
         self.y = 0
         self.circle = QgsVectorLayer()
         self.line_layers = []
-        self.toolPan = switchPanTool(self.canvas, self.iface, 'draw')
-        self.toolZoomIn = switchZoomTool(self.canvas, self.iface, False, 'draw')
-        self.toolZoomOut = switchZoomTool(self.canvas, self.iface, True, 'draw')
-        inp = InputDialog()
-        if inp.exec_():
-            print(inp.data)
-        QgsMapToolEmitPoint.__init__(self, self.canvas)
-
+        # self.toolPan = switchPanTool(self.canvas, self.iface, 'draw')
+        # self.toolZoomIn = switchZoomTool(self.canvas, self.iface, False, 'draw')
+        # self.toolZoomOut = switchZoomTool(self.canvas, self.iface, True, 'draw')
+    
     def clearCanvas(self):
         if(len(self.line_layers) > 0):
             for line in self.line_layers:
@@ -103,35 +99,43 @@ class DrawSectorCircle(QgsMapTool):
             self.line_layers.append(line)
             QgsProject.instance().addMapLayer(line)
 
+    def getInput(self):
+        self.inpDialog.exec_()
+        radius, pointLayer, center = self.inpDialog.getInput()
+        print(radius, pointLayer, center)
+
+    def run(self):
+        self.inpDialog = InputDialog(self.canvas)
+        self.getInput()
     
-    def canvasPressEvent(self, e):
-        self.clearCanvas()
+    # def canvasPressEvent(self, e):
+    #     self.clearCanvas()
 
-        point = self.toMapCoordinates(self.canvas.mouseLastXY())
-        self.x = point[0]
-        self.y = point[1]
-        print ('Center - ({:.4f}, {:.4f})'.format(self.x, self.y))
+    #     point = self.toMapCoordinates(self.canvas.mouseLastXY())
+    #     self.x = point[0]
+    #     self.y = point[1]
+    #     print ('Center - ({:.4f}, {:.4f})'.format(self.x, self.y))
 
-        radius, ok = QInputDialog.getDouble(
-            self.iface.mainWindow(), 'Radius', 'Give a radius in km:', min=0.1)
+    #     radius, ok = QInputDialog.getDouble(
+    #         self.iface.mainWindow(), 'Radius', 'Give a radius in km:', min=0.1)
 
-        if ok:
-            self.drawCircle(radius)
-            self.drawSectorLines(radius)
-            self.iface.messageBar().pushMessage("Sectors Drawn",
-                                           "Click on the sector for which you want to query places.\nPress 'Q' to Quit.\nPress 'L' to change Location.", level=Qgis.Success, duration=3)
+    #     if ok:
+    #         self.drawCircle(radius)
+    #         self.drawSectorLines(radius)
+    #         self.iface.messageBar().pushMessage("Sectors Drawn",
+    #                                        "Click on the sector for which you want to query places.\nPress 'Q' to Quit.\nPress 'L' to change Location.", level=Qgis.Success, duration=3)
 
-            query_places = QuerySectorPlaces(
-                self.iface.mapCanvas(), self.iface, point, radius, self.line_layers, self.circle)
-            self.iface.mapCanvas().setMapTool(query_places)
+    #         query_places = QuerySectorPlaces(
+    #             self.iface.mapCanvas(), self.iface, point, radius, self.line_layers, self.circle)
+    #         self.iface.mapCanvas().setMapTool(query_places)
 
-    def keyReleaseEvent(self, e):
-        if(chr(e.key()) == 'Q'):
-            self.canvas.unsetMapTool(self)
-        elif(chr(e.key()) == 'P'):
-            self.canvas.setMapTool(self.toolPan)
-        elif(chr(e.key()) == 'I'):
-            self.canvas.setMapTool(self.toolZoomIn)
-        elif(chr(e.key()) == 'O'):
-            self.canvas.setMapTool(self.toolZoomOut)
+    # def keyReleaseEvent(self, e):
+    #     if(chr(e.key()) == 'Q'):
+    #         self.canvas.unsetMapTool(self)
+    #     elif(chr(e.key()) == 'P'):
+    #         self.canvas.setMapTool(self.toolPan)
+    #     elif(chr(e.key()) == 'I'):
+    #         self.canvas.setMapTool(self.toolZoomIn)
+    #     elif(chr(e.key()) == 'O'):
+    #         self.canvas.setMapTool(self.toolZoomOut)
 

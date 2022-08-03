@@ -215,4 +215,5 @@ class SecQuery:
             self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
 
-        self.iface.mapCanvas().setMapTool(DrawSectorCircle(self.iface.mapCanvas(), self.iface))
+        self.drawTool = DrawSectorCircle(self.iface.mapCanvas(), self.iface)
+        self.drawTool.run()

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string notr="true">Dialog</string>
+   <string notr="true">SecQuery</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -38,7 +38,7 @@
       <property name="currentIndex">
        <number>0</number>
       </property>
-      <widget class="QWidget" name="tab">
+      <widget class="QWidget" name="inpTab">
        <attribute name="title">
         <string>Input for Sector Generation</string>
        </attribute>
@@ -66,14 +66,14 @@
              <x>10</x>
              <y>10</y>
              <width>371</width>
-             <height>194</height>
+             <height>301</height>
             </rect>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_3">
+           <layout class="QVBoxLayout" name="inpVLayout">
             <item>
-             <widget class="QLabel" name="label_2">
+             <widget class="QLabel" name="radiusLabel">
               <property name="text">
-               <string>Enter Radius</string>
+               <string>Enter Radius (in kilometers)</string>
               </property>
              </widget>
             </item>
@@ -83,6 +83,26 @@
             <item>
              <widget class="QLabel" name="label">
               <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Radius defaults to a minimum value of 0.1 km&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="layerLabel">
+              <property name="text">
                <string>Select Points Layer</string>
               </property>
              </widget>
@@ -91,14 +111,68 @@
              <widget class="QgsMapLayerComboBox" name="layerCombobox"/>
             </item>
             <item>
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>15</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>Set Point Layer CRS (Optional)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QgsProjectionSelectionWidget" name="crsSelect"/>
+            </item>
+            <item>
              <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Layer CRS defaults to  EPS6:4326 - WGS 84&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="centerLabel">
               <property name="text">
                <string>Select Center Point</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="centerPointInput"/>
+             <layout class="QHBoxLayout" name="cpHLayout">
+              <item>
+               <widget class="QLineEdit" name="centerPointInput"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="mapCoordButton">
+                <property name="text">
+                 <string>MS</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>
@@ -106,7 +180,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_2">
+      <widget class="QWidget" name="logTab">
        <attribute name="title">
         <string>Log</string>
        </attribute>
@@ -240,7 +314,7 @@ p, li { white-space: pre-wrap; }
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <layout class="QHBoxLayout" name="pbHLayout">
      <property name="topMargin">
       <number>0</number>
      </property>
@@ -254,7 +328,7 @@ p, li { white-space: pre-wrap; }
     </layout>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="mButtonBox">
+    <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -270,6 +344,11 @@ p, li { white-space: pre-wrap; }
    <class>QgsMapLayerComboBox</class>
    <extends>QComboBox</extends>
    <header>qgsmaplayercombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsProjectionSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsprojectionselectionwidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
