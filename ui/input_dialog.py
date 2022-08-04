@@ -34,15 +34,6 @@ from qgis.PyQt.QtCore import pyqtSignal
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'input_dialog.ui'))
 
-class PrintClickedPoint(QgsMapToolEmitPoint):
-    def __init__(self, canvas):
-        self.canvas = canvas
-        QgsMapToolEmitPoint.__init__(self, self.canvas)
-
-    def canvasPressEvent(self, event):
-        point = self.toMapCoordinates(self.canvas.mouseLastXY())
-        print('({:.4f}, {:.4f})'.format(point[0], point[1]))
-
 
 class InputDialog(QtWidgets.QDialog, FORM_CLASS):
 
@@ -54,7 +45,7 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
 
         self.canvas = canvas
-        self.pointTool = PrintClickedPoint(self.canvas)
+        self.pointTool = QgsMapToolEmitPoint(self.canvas)
         self.radius = 0
         self.pointLayer = QgsVectorLayer()
         self.center = QgsPointXY()
@@ -68,8 +59,18 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         self.layerCombobox.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.layerCombobox.setShowCrs(True)
 
+        self.pointTool.canvasClicked.connect(self.getPoint)
         self.mapCoordButton.clicked.connect(self.mapClick)
-        # self.pointTool.canvasClicked.connect(self.getPoint)
+
+        generateButton = QPushButton(self.tr("&Generate Sectors"))
+        generateButton.setDefault(True)
+
+        closeButton = QPushButton(self.tr("&Close"))
+        closeButton.setDefault(True)
+        
+        self.buttonBox.rejected.connect(lambda: self.close())
+        self.buttonBox.addButton(generateButton, QDialogButtonBox.AcceptRole)
+        self.buttonBox.addButton(closeButton, QDialogButtonBox.RejectRole)
 
         self.textShortHelp.setText("<h1>SecQuery</h1> <b>General:</b><br>"\
                 "This algorithm implements the Dijkstra-Search to return the <b>shortest path between two points</b> on a given <b>network dataset</b>.<br>"\
@@ -85,20 +86,30 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
                 "The output of the algorithm is a Layer containing a <b>single linestring</b>, the attributes showcase the"\
                 "<ul><li>Name and coordinates of startpoint</li><li>Name and coordinates of endpoint</li><li>Entry-cost to enter network</li><li>Exit-cost to exit network</li><li>Cost of shortest path on graph</li><li>Total cost as sum of all cost elements</li></ul>")
 
-    def validateInput(self):
-        print('Validating input.')
+    def isInputValid(self):
+        self.txtLog.append('Validating input...')
+        rInp = self.radiusInput.text()
+        radiusKm = 0.1 if float(rInp) < 0.1 else float(rInp)
+        renderContext = QgsRenderContext().fromMapSettings(self.canvas.mapSettings())
+        self.radius = renderContext.convertMetersToMapUnits(radiusKm * 1000)
+        self.txtLog.append(f'Radius converted from {radiusKm} km to {self.radius} map units.')
+
+
         # self.crsSelect.setCrs(QgsCoordinateReferenceSystem("EPS6:4326"))
+
+    def emitInputData(self):
+        if self.isInputValid():
+            pass
     
     def mapClick(self):
-        self.showMinimized()
+        self.hide()
         self.canvas.setMapTool(self.pointTool)
 
     def getPoint(self, point):
-        x, y = point[0], point[1]
-
-    def getInput(self):
-        self.validateInput()
-        return self.radius, self.pointLayer, self.center
+        self.x, self.y = point[0], point[1]
+        self.show()
+        self.centerPointInput.setText(f"{self.x}, {self.y}")
+        self.canvas.unsetMapTool(self.pointTool)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()

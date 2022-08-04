@@ -101,8 +101,7 @@ class DrawSectorCircle():
 
     def getInput(self):
         self.inpDialog.exec_()
-        radius, pointLayer, center = self.inpDialog.getInput()
-        print(radius, pointLayer, center)
+
 
     def run(self):
         self.inpDialog = InputDialog(self.canvas)
