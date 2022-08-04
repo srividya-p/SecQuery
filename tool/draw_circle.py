@@ -44,6 +44,8 @@ class DrawSectorCircle():
         self.y = 0
         self.circle = QgsVectorLayer()
         self.line_layers = []
+        self.inpDialog = InputDialog(self.canvas)
+        self.inpDialog.inputDataSignal.connect(self.processInputDataSignal)
         # self.toolPan = switchPanTool(self.canvas, self.iface, 'draw')
         # self.toolZoomIn = switchZoomTool(self.canvas, self.iface, False, 'draw')
         # self.toolZoomOut = switchZoomTool(self.canvas, self.iface, True, 'draw')
@@ -98,14 +100,14 @@ class DrawSectorCircle():
 
             self.line_layers.append(line)
             QgsProject.instance().addMapLayer(line)
-
-    def getInput(self):
-        self.inpDialog.exec_()
+        
+    def processInputDataSignal(self, radius, pointsLayer, pointCrs, centerX, centerY):
+        #self.crsSelect.setCrs(QgsCoordinateReferenceSystem("EPS6:4326"))
+        pass
 
 
     def run(self):
-        self.inpDialog = InputDialog(self.canvas)
-        self.getInput()
+        self.inpDialog.exec_()
     
     # def canvasPressEvent(self, e):
     #     self.clearCanvas()

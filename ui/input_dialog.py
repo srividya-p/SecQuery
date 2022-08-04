@@ -38,6 +38,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 class InputDialog(QtWidgets.QDialog, FORM_CLASS):
 
     closingPlugin = pyqtSignal()
+    inputDataSignal = pyqtSignal(float, QgsVectorLayer, QgsCoordinateReferenceSystem, float, float)
 
     def __init__(self, canvas, parent=None):
         """Constructor."""
@@ -46,12 +47,10 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
 
         self.canvas = canvas
         self.pointTool = QgsMapToolEmitPoint(self.canvas)
-        self.radius = 0
-        self.pointLayer = QgsVectorLayer()
-        self.center = QgsPointXY()
+        self.renderContext = QgsRenderContext().fromMapSettings(self.canvas.mapSettings())
         
-        self.radiusInput.setValidator(QDoubleValidator(bottom = 0.1, decimals = 2))
-        self.radiusInput.setPlaceholderText("Enter a decimal value above 0.1")
+        self.radiusKm.valueChanged.connect(self.radiusKmChanged)
+        self.radiusMapUnits.setButtonSymbols(2)
 
         self.crsSelect.setOptionVisible(self.crsSelect.CrsNotSet, True)
         self.crsSelect.setNotSetText('Select a CRS')
@@ -62,15 +61,19 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         self.pointTool.canvasClicked.connect(self.getPoint)
         self.mapCoordButton.clicked.connect(self.mapClick)
 
+        self.centerXInput.setValidator(QDoubleValidator())
+        self.centerYInput.setValidator(QDoubleValidator())
+
         generateButton = QPushButton(self.tr("&Generate Sectors"))
         generateButton.setDefault(True)
 
         closeButton = QPushButton(self.tr("&Close"))
         closeButton.setDefault(True)
         
-        self.buttonBox.rejected.connect(lambda: self.close())
         self.buttonBox.addButton(generateButton, QDialogButtonBox.AcceptRole)
         self.buttonBox.addButton(closeButton, QDialogButtonBox.RejectRole)
+        self.buttonBox.rejected.connect(lambda: self.close())
+        self.buttonBox.accepted.connect(self.emitInputData)
 
         self.textShortHelp.setText("<h1>SecQuery</h1> <b>General:</b><br>"\
                 "This algorithm implements the Dijkstra-Search to return the <b>shortest path between two points</b> on a given <b>network dataset</b>.<br>"\
@@ -86,31 +89,43 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
                 "The output of the algorithm is a Layer containing a <b>single linestring</b>, the attributes showcase the"\
                 "<ul><li>Name and coordinates of startpoint</li><li>Name and coordinates of endpoint</li><li>Entry-cost to enter network</li><li>Exit-cost to exit network</li><li>Cost of shortest path on graph</li><li>Total cost as sum of all cost elements</li></ul>")
 
-    def isInputValid(self):
-        self.txtLog.append('Validating input...')
-        rInp = self.radiusInput.text()
-        radiusKm = 0.1 if float(rInp) < 0.1 else float(rInp)
-        renderContext = QgsRenderContext().fromMapSettings(self.canvas.mapSettings())
-        self.radius = renderContext.convertMetersToMapUnits(radiusKm * 1000)
-        self.txtLog.append(f'Radius converted from {radiusKm} km to {self.radius} map units.')
+    def isCenterValid(self, centerXText, centerYText):
+        if centerXText == '' or centerYText == '':
+            self.statusLabel.setText('Please select a center point.')
+            self.statusLabel.setStyleSheet('color: red')
+            return False, 0, 0
 
+        return True, float(centerXText), float(centerYText)
 
-        # self.crsSelect.setCrs(QgsCoordinateReferenceSystem("EPS6:4326"))
-
-    def emitInputData(self):
-        if self.isInputValid():
-            pass
-    
     def mapClick(self):
+        self.statusLabel.setText('')
         self.hide()
         self.canvas.setMapTool(self.pointTool)
 
     def getPoint(self, point):
-        self.x, self.y = point[0], point[1]
         self.show()
-        self.centerPointInput.setText(f"{self.x}, {self.y}")
+        self.centerXInput.setText(str(point[0]))
+        self.centerYInput.setText(str(point[1]))
         self.canvas.unsetMapTool(self.pointTool)
 
+    def radiusKmChanged(self):
+        km = self.radiusKm.value()
+        mapUnits = self.renderContext.convertMetersToMapUnits(km * 1000)
+        self.radiusMapUnits.setValue(mapUnits)
+
+    def emitInputData(self):
+        radius = self.radiusMapUnits.value()
+        pointsLayer = self.layerCombobox.currentLayer()
+        pointCrs = self.crsSelect.crs()
+        centerXText = self.centerXInput.text()
+        centerYText = self.centerYInput.text()
+
+        centerValid, centerX, centerY = self.isCenterValid(centerXText, centerYText)
+        if not centerValid:
+            return
+
+        self.inputDataSignal.emit(radius, pointsLayer, pointCrs, centerX, centerY)
+    
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
