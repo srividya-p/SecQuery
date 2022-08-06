@@ -27,6 +27,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
 import importlib.util
+import processing
 import math
 pi = math.pi
 
@@ -46,9 +47,7 @@ class DrawSectorCircle():
         self.line_layers = []
         self.inpDialog = InputDialog(self.canvas)
         self.inpDialog.inputDataSignal.connect(self.processInputDataSignal)
-        # self.toolPan = switchPanTool(self.canvas, self.iface, 'draw')
-        # self.toolZoomIn = switchZoomTool(self.canvas, self.iface, False, 'draw')
-        # self.toolZoomOut = switchZoomTool(self.canvas, self.iface, True, 'draw')
+        self.progress = 0
     
     def clearCanvas(self):
         if(len(self.line_layers) > 0):
@@ -59,6 +58,10 @@ class DrawSectorCircle():
 
             self.line_layers = []
             self.circle = QgsVectorLayer()
+
+    def increaseProgress(self):
+        self.progress += 10
+        self.inpDialog.progressBar.setValue(self.progress)
 
     def drawCircle(self, radius):
         circle = QgsVectorLayer("Polygon", "Circle", "memory")
@@ -77,6 +80,7 @@ class DrawSectorCircle():
 
         self.circle = circle
         QgsProject.instance().addMapLayer(circle)
+        self.increaseProgress()
 
     def drawSectorLines(self, radius):
         line_layers = []
@@ -94,49 +98,42 @@ class DrawSectorCircle():
             provider.addFeatures([seg])
             line.commitChanges()
 
-            # symbol = QgsFillSymbol.createSimple({'color': 'black'})
             line.renderer().symbol().setColor(QColor("black"))
             line.triggerRepaint()
 
             self.line_layers.append(line)
-            QgsProject.instance().addMapLayer(line)
-        
+            self.increaseProgress()
+            
+    def mergeAndAddDiameters(self):
+        parameters = {
+            'LAYERS': self.line_layers, 
+            'OUTPUT': "memory:Diameters"
+        }
+
+        merged_diameters = processing.run("qgis:mergevectorlayers", parameters)["OUTPUT"]
+        merged_diameters.renderer().symbol().setColor(QColor("black"))
+        merged_diameters.triggerRepaint()
+        self.increaseProgress()
+        QgsProject.instance().addMapLayer(merged_diameters)
+
     def processInputDataSignal(self, radius, pointsLayer, pointCrs, centerX, centerY):
-        #self.crsSelect.setCrs(QgsCoordinateReferenceSystem("EPS6:4326"))
-        pass
+        self.x, self.y = centerX, centerY
+        self.drawCircle(radius)
+        self.drawSectorLines(radius)
+        self.mergeAndAddDiameters()
+        self.inpDialog.hide()
+        self.iface.messageBar().pushMessage("Sectors Drawn",
+                                           "Click on the sector for which you want to query places.\nPress 'Q' to Quit.\nPress 'L' to change Location.", level=Qgis.Success, duration=3)
+
+        query_places = QuerySectorPlaces(
+                self.iface.mapCanvas(), self.iface, [centerX, centerY], radius, self.line_layers, self.circle)
+        self.iface.mapCanvas().setMapTool(query_places)
 
 
     def run(self):
         self.inpDialog.exec_()
     
-    # def canvasPressEvent(self, e):
-    #     self.clearCanvas()
 
-    #     point = self.toMapCoordinates(self.canvas.mouseLastXY())
-    #     self.x = point[0]
-    #     self.y = point[1]
-    #     print ('Center - ({:.4f}, {:.4f})'.format(self.x, self.y))
+    #self.crsSelect.setCrs(QgsCoordinateReferenceSystem("EPS6:4326"))
 
-    #     radius, ok = QInputDialog.getDouble(
-    #         self.iface.mainWindow(), 'Radius', 'Give a radius in km:', min=0.1)
-
-    #     if ok:
-    #         self.drawCircle(radius)
-    #         self.drawSectorLines(radius)
-    #         self.iface.messageBar().pushMessage("Sectors Drawn",
-    #                                        "Click on the sector for which you want to query places.\nPress 'Q' to Quit.\nPress 'L' to change Location.", level=Qgis.Success, duration=3)
-
-    #         query_places = QuerySectorPlaces(
-    #             self.iface.mapCanvas(), self.iface, point, radius, self.line_layers, self.circle)
-    #         self.iface.mapCanvas().setMapTool(query_places)
-
-    # def keyReleaseEvent(self, e):
-    #     if(chr(e.key()) == 'Q'):
-    #         self.canvas.unsetMapTool(self)
-    #     elif(chr(e.key()) == 'P'):
-    #         self.canvas.setMapTool(self.toolPan)
-    #     elif(chr(e.key()) == 'I'):
-    #         self.canvas.setMapTool(self.toolZoomIn)
-    #     elif(chr(e.key()) == 'O'):
-    #         self.canvas.setMapTool(self.toolZoomOut)
 
