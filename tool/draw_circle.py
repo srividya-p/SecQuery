@@ -26,48 +26,30 @@ from qgis.gui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-import importlib.util
 import processing
 import math
 pi = math.pi
 
-approot = QgsProject.instance().homePath()
-
 from .query_sector import QuerySectorPlaces
-from secquery.util.switch_tools import switchPanTool, switchZoomTool
 from secquery.ui.input_dialog import InputDialog 
 
 class DrawSectorCircle():
-    def __init__(self, canvas, iface):
-        self.canvas = canvas
+    def __init__(self, iface):
         self.iface = iface
-        self.x = 0
-        self.y = 0
-        self.circle = QgsVectorLayer()
-        self.line_layers = []
+        self.canvas = iface.mapCanvas()
         self.inpDialog = InputDialog(self.canvas)
         self.inpDialog.inputDataSignal.connect(self.processInputDataSignal)
         self.progress = 0
     
-    def clearCanvas(self):
-        if(len(self.line_layers) > 0):
-            for line in self.line_layers:
-                QgsProject.instance().removeMapLayer(line.id())
-
-            QgsProject.instance().removeMapLayer(self.circle.id())
-
-            self.line_layers = []
-            self.circle = QgsVectorLayer()
-
     def increaseProgress(self):
         self.progress += 10
         self.inpDialog.progressBar.setValue(self.progress)
 
-    def drawCircle(self, radius):
+    def getCircleLayer(self, radius, centerX, centerY):
         circle = QgsVectorLayer("Polygon", "Circle", "memory")
         feature = QgsFeature()
         feature.setGeometry(QgsGeometry.fromPointXY(
-            QgsPointXY(self.x, self.y)).buffer(radius, 20))
+            QgsPointXY(centerX, centerY)).buffer(radius, 20))
         provider = circle.dataProvider()
         circle.startEditing()
         provider.addFeatures([feature])
@@ -78,17 +60,15 @@ class DrawSectorCircle():
         circle.renderer().setSymbol(symbol)
         circle.triggerRepaint()
 
-        self.circle = circle
-        QgsProject.instance().addMapLayer(circle)
-        self.increaseProgress()
+        return circle
 
-    def drawSectorLines(self, radius):
+    def getSectorLineLayers(self, radius, centerX, centerY):
         line_layers = []
         for n in range(8):
-            line_start = QgsPointXY(self.x-(radius*math.cos((2*n*pi + pi)/16)),
-                                    self.y-(radius*math.sin((2*n*pi + pi)/16)))
-            line_end = QgsPointXY(self.x+(radius*math.cos((2*n*pi + pi)/16)),
-                                  self.y+(radius*math.sin((2*n*pi + pi)/16)))
+            line_start = QgsPointXY(centerX-(radius*math.cos((2*n*pi + pi)/16)),
+                                    centerY-(radius*math.sin((2*n*pi + pi)/16)))
+            line_end = QgsPointXY(centerX+(radius*math.cos((2*n*pi + pi)/16)),
+                                  centerY+(radius*math.sin((2*n*pi + pi)/16)))
 
             line = QgsVectorLayer("LineString", "Diameter "+str(n+1), "memory")
             seg = QgsFeature()
@@ -101,39 +81,48 @@ class DrawSectorCircle():
             line.renderer().symbol().setColor(QColor("black"))
             line.triggerRepaint()
 
-            self.line_layers.append(line)
+            line_layers.append(line)
             self.increaseProgress()
+        
+        return line_layers
             
-    def mergeAndAddDiameters(self):
+    def getMergedDiameters(self, line_layers):
         parameters = {
-            'LAYERS': self.line_layers, 
+            'LAYERS': line_layers, 
             'OUTPUT': "memory:Diameters"
         }
 
         merged_diameters = processing.run("qgis:mergevectorlayers", parameters)["OUTPUT"]
         merged_diameters.renderer().symbol().setColor(QColor("black"))
         merged_diameters.triggerRepaint()
-        self.increaseProgress()
-        QgsProject.instance().addMapLayer(merged_diameters)
+
+        return merged_diameters
+
+    def setCrs(self, pointsLayer, pointCrs):
+        if not pointCrs.isValid():
+            return
+        pointsLayer.setCrs(pointCrs, True)
 
     def processInputDataSignal(self, radius, pointsLayer, pointCrs, centerX, centerY):
-        self.x, self.y = centerX, centerY
-        self.drawCircle(radius)
-        self.drawSectorLines(radius)
-        self.mergeAndAddDiameters()
+        circle = self.getCircleLayer(radius, centerX, centerY)
+        QgsProject.instance().addMapLayer(circle)
+        self.increaseProgress()
+        
+        line_layers = self.getSectorLineLayers(radius, centerX, centerY)
+        merged_diameters = self.getMergedDiameters(line_layers)
+        QgsProject.instance().addMapLayer(merged_diameters)
+        self.increaseProgress()
+
+        self.setCrs(pointsLayer, pointCrs)
         self.inpDialog.hide()
         self.iface.messageBar().pushMessage("Sectors Drawn",
-                                           "Click on the sector for which you want to query places.\nPress 'Q' to Quit.\nPress 'L' to change Location.", level=Qgis.Success, duration=3)
+                                           "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
-        query_places = QuerySectorPlaces(
-                self.iface.mapCanvas(), self.iface, [centerX, centerY], radius, self.line_layers, self.circle)
+        query_places = QuerySectorPlaces(self.iface, [centerX, centerY], 
+                radius, merged_diameters, circle, pointsLayer)
+        
         self.iface.mapCanvas().setMapTool(query_places)
-
 
     def run(self):
         self.inpDialog.exec_()
-    
-
-    #self.crsSelect.setCrs(QgsCoordinateReferenceSystem("EPS6:4326"))
-
 

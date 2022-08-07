@@ -34,9 +34,9 @@ pi = math.pi
 approot = QgsProject.instance().homePath()
 
 class QuerySectorPlaces(QgsMapTool):
-    def __init__(self, canvas, iface, point, radius, line_layers, circle):
-        self.canvas = canvas
+    def __init__(self, iface, point, radius, merged_diameters, circle, pointsLayer):
         self.iface = iface
+        self.canvas = iface.mapCanvas()
         self.center_x = point[0]
         self.center_y = point[1]
         self.x = 0
@@ -44,7 +44,8 @@ class QuerySectorPlaces(QgsMapTool):
         self.radius = radius
         self.sector_layer = QgsVectorLayer()
         self.circle = circle
-        self.line_layers = line_layers
+        self.pointsLayer = pointsLayer
+        self.merged_diameters = merged_diameters
         self.direction_map = {0:'ENE', 1:'NE', 2:'NNE', 3:'N', 4:'NNW', 5:'NW', 6:'WNW', 7:'W',
                             8:'WSW', 9:'SW', 10:'SSW', 11:'S', 12:'SSE', 13:'SE', 14:'ESE', 15:'E'}
         self.alpha_map = {0:'D', 1:'C', 2:'B', 3:'A', 4:'P', 5:'O', 6:'N', 7:'M',
@@ -52,14 +53,10 @@ class QuerySectorPlaces(QgsMapTool):
         QgsMapToolEmitPoint.__init__(self, self.canvas)
 
     def clearCanvas(self):
-        if(len(self.line_layers) > 0):
-            for line in self.line_layers:
-                QgsProject.instance().removeMapLayer(line.id())
-
-            QgsProject.instance().removeMapLayer(self.circle.id())
-
-            self.line_layers = []
-            self.circle = QgsVectorLayer()
+        QgsProject.instance().removeMapLayer(self.circle.id())
+        QgsProject.instance().removeMapLayer(self.merged_diameters.id())
+        self.merged_diameters = QgsVectorLayer()
+        self.circle = QgsVectorLayer()
 
     def clearSector(self):
         if(self.sector_layer.id()):
@@ -127,21 +124,21 @@ class QuerySectorPlaces(QgsMapTool):
         dy = self.y - self.center_y
         dx = self.x - self.center_x
         angle = math.atan2(dy, dx)
+        angle -= pi/16
 
         if angle < 0:
             angle += 2*pi
 
-        angle -= pi/16
-
         sector_num = int(angle//((2*pi)/16)) 
+
+        print(math.degrees(angle), sector_num)
         self.drawSector(sector_num, self.radius)
         return f"{self.alpha_map[sector_num]} ({self.direction_map[sector_num]})" 
 
     def getNamesInPolygon(self, n):
-        pointLayer = QgsProject.instance().mapLayersByName('Places')[0]
         places_in_sector = ''
         for a in self.sector_layer.getFeatures():
-            for b in pointLayer.getFeatures():
+            for b in self.pointsLayer.getFeatures():
                 if a.geometry().contains(b.geometry()):
                     places_in_sector += str(b['name'])+'<br>'
 
@@ -163,17 +160,21 @@ class QuerySectorPlaces(QgsMapTool):
         self.getNamesInPolygon(n)
 
     def keyReleaseEvent(self, e):
-        if(chr(e.key()) == 'Q'):
-            self.clearSector()
-            self.clearCanvas()
-            self.canvas.unsetMapTool(self)
-        elif(chr(e.key()) == 'D'):
-            self.clearSector()
-            self.clearCanvas()
+        try:
+            if(chr(e.key()) == 'Q'):
+                self.clearSector()
+                self.clearCanvas()
+                self.canvas.unsetMapTool(self)
+            elif(chr(e.key()) == 'D'):
+                self.clearSector()
+                self.clearCanvas()
 
-            circle_spec = importlib.util.spec_from_file_location("draw_circle", approot+"/query-places/draw_circle.py")
-            draw_circle_file = importlib.util.module_from_spec(circle_spec)
-            circle_spec.loader.exec_module(draw_circle_file)
+                circle_spec = importlib.util.spec_from_file_location("draw_circle", approot+"/query-places/draw_circle.py")
+                draw_circle_file = importlib.util.module_from_spec(circle_spec)
+                circle_spec.loader.exec_module(draw_circle_file)
 
-            canvas_clicked = draw_circle_file.DrawSectorCircle(self.iface.mapCanvas(), self.iface)
-            self.iface.mapCanvas().setMapTool(canvas_clicked)
+                canvas_clicked = draw_circle_file.DrawSectorCircle(self.iface.mapCanvas(), self.iface)
+                self.iface.mapCanvas().setMapTool(canvas_clicked)
+        except ValueError:
+            pass
+
