@@ -98,9 +98,10 @@ class DrawSectorCircle():
 
         return merged_diameters
 
-    def setCrs(self, pointsLayer, pointCrs):
+    def setLayerCrs(self, pointsLayer, pointCrs):
         if not pointCrs.isValid():
-            return
+            defaultCrs = QgsCoordinateReferenceSystem('EPSG:4326')
+            pointsLayer.setCrs(defaultCrs, True)
         pointsLayer.setCrs(pointCrs, True)
 
     def processInputDataSignal(self, radius, pointsLayer, pointCrs, centerX, centerY):
@@ -113,13 +114,13 @@ class DrawSectorCircle():
         QgsProject.instance().addMapLayer(merged_diameters)
         self.increaseProgress()
 
-        self.setCrs(pointsLayer, pointCrs)
+        self.setLayerCrs(pointsLayer, pointCrs)
         self.inpDialog.hide()
         self.iface.messageBar().pushMessage("Sectors Drawn",
                                            "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
         query_places = QuerySectorPlaces(self.iface, [centerX, centerY], 
-                radius, merged_diameters, circle, pointsLayer)
+                radius, merged_diameters.id(), circle.id(), pointsLayer)
         
         self.iface.mapCanvas().setMapTool(query_places)
 

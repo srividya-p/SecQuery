@@ -34,42 +34,53 @@ pi = math.pi
 approot = QgsProject.instance().homePath()
 
 class QuerySectorPlaces(QgsMapTool):
-    def __init__(self, iface, point, radius, merged_diameters, circle, pointsLayer):
+    def __init__(self, iface, center_point, radius, merged_diameters_id, circle_id, points_layer):
         self.iface = iface
         self.canvas = iface.mapCanvas()
-        self.center_x = point[0]
-        self.center_y = point[1]
-        self.x = 0
-        self.y = 0
+        self.center_x = center_point[0]
+        self.center_y = center_point[1]
         self.radius = radius
+        self.circle_id = circle_id
+        self.merged_diameters_id = merged_diameters_id
+
         self.sector_layer = QgsVectorLayer()
-        self.circle = circle
-        self.pointsLayer = pointsLayer
-        self.merged_diameters = merged_diameters
+        self.points_layer = points_layer
+        self.prev_id = None
+        self.memory_layers = []
+        
         self.direction_map = {0:'ENE', 1:'NE', 2:'NNE', 3:'N', 4:'NNW', 5:'NW', 6:'WNW', 7:'W',
                             8:'WSW', 9:'SW', 10:'SSW', 11:'S', 12:'SSE', 13:'SE', 14:'ESE', 15:'E'}
         self.alpha_map = {0:'D', 1:'C', 2:'B', 3:'A', 4:'P', 5:'O', 6:'N', 7:'M',
                             8:'L', 9:'K', 10:'J', 11:'I', 12:'H', 13:'G', 14:'F', 15:'E'}
+        
         QgsMapToolEmitPoint.__init__(self, self.canvas)
 
     def clearCanvas(self):
-        QgsProject.instance().removeMapLayer(self.circle.id())
-        QgsProject.instance().removeMapLayer(self.merged_diameters.id())
-        self.merged_diameters = QgsVectorLayer()
-        self.circle = QgsVectorLayer()
+        QgsProject.instance().removeMapLayer(self.circle_id)
+        QgsProject.instance().removeMapLayer(self.merged_diameters_id)
+        for layer_id in self.memory_layers:
+            QgsProject.instance().removeMapLayer(layer_id)
 
     def clearSector(self):
-        if(self.sector_layer.id()):
+        if self.sector_layer.id():
             QgsProject.instance().removeMapLayer(self.sector_layer.id())
             self.sector_layer = QgsVectorLayer()
 
-    def drawSector(self, n, r):
-        arc_start = [self.center_x+(r*math.cos((2*n*pi + pi)/16)),
-                     self.center_y+(r*math.sin((2*n*pi + pi)/16))]
-        arc_end = [self.center_x+(r*math.cos((2*(n+1)*pi + pi)/16)),
-                   self.center_y+(r*math.sin((2*(n+1)*pi + pi)/16))]
-        arc_mid = [self.center_x+(r*math.cos((2*n*pi + 2*(n+1)*pi + pi)/32)),
-                   self.center_y+(r*math.sin((2*n*pi + 2*(n+1)*pi + pi)/32))]
+    def hidePrevQueriedPointLayer(self):
+        if self.prev_id != None:
+            prevLayer = QgsProject.instance().layerTreeRoot().findLayer(self.prev_id)
+            prevLayer.setItemVisibilityChecked(False)
+
+    def getNameFromIndex(self, index):
+        return f"{self.alpha_map[index]} ({self.direction_map[index]})" 
+
+    def drawSector(self, n):
+        arc_start = [self.center_x+(self.radius*math.cos((2*n*pi + pi)/16)),
+                     self.center_y+(self.radius*math.sin((2*n*pi + pi)/16))]
+        arc_end = [self.center_x+(self.radius*math.cos((2*(n+1)*pi + pi)/16)),
+                   self.center_y+(self.radius*math.sin((2*(n+1)*pi + pi)/16))]
+        arc_mid = [self.center_x+(self.radius*math.cos((2*n*pi + 2*(n+1)*pi + pi)/32)),
+                   self.center_y+(self.radius*math.sin((2*n*pi + 2*(n+1)*pi + pi)/32))]
 
         arc = QgsVectorLayer(
             "LineString?crs=epsg:4326&field=id:integer&field=name:string(20)&index=yes", "line", "memory")
@@ -114,31 +125,32 @@ class QuerySectorPlaces(QgsMapTool):
 
         QgsProject.instance().addMapLayer(sector)
         symbol = QgsFillSymbol.createSimple(
-            {'style': 'no', 'outline_style': 'solid', 'outline_width': '0.5', 'outline_color': 'blue'})
+            {'style': 'no', 'outline_style': 'solid', 'outline_width': '0.7', 'outline_color': 'blue'})
         sector.renderer().setSymbol(symbol)
         sector.triggerRepaint()
 
         self.sector_layer = sector
 
-    def identifySector(self):
-        dy = self.y - self.center_y
-        dx = self.x - self.center_x
+    def identifySector(self, x, y):
+        dy = y - self.center_y
+        dx = x - self.center_x
         angle = math.atan2(dy, dx)
         angle -= pi/16
 
         if angle < 0:
             angle += 2*pi
 
-        sector_num = int(angle//((2*pi)/16)) 
+        sector_num = int(angle//((2*pi)/16))
+        return sector_num
 
-        self.drawSector(sector_num, self.radius)
-        return f"{self.alpha_map[sector_num]} ({self.direction_map[sector_num]})" 
-
-    def getNamesInPolygon(self, n):
-        layer_name = f'Sector {n} Center ({self.center_x:.3f}, {self.center_y:.3f}) Points'
+    def querySectorPoints(self, sector_name):
+        layer_name = f'Sector {sector_name} Center ({self.center_x:.3f}, {self.center_y:.3f}) Points'
         existingLayers = QgsProject.instance().mapLayersByName(layer_name)
 
         if len(existingLayers) > 0:
+            self.prev_id = existingLayers[0].id()
+            prevLayer = QgsProject.instance().layerTreeRoot().findLayer(self.prev_id)
+            prevLayer.setItemVisibilityChecked(True)
             self.iface.showAttributeTable(existingLayers[0])
             return
 
@@ -147,51 +159,54 @@ class QuerySectorPlaces(QgsMapTool):
         feature_count = 0
 
         for a in self.sector_layer.getFeatures():
-            for b in self.pointsLayer.getFeatures():
+            for b in self.points_layer.getFeatures():
                 if a.geometry().contains(b.geometry()):
                     join_features.append(b)
                     feature_count += 1
 
         if feature_count == 0:
-            QMessageBox().information(None, "SecQuery", f"<h3>Sector {n}</h3> <p>No Location Points found!</p>")
+            QMessageBox().information(None, "SecQuery", f"<h3>Sector {sector_name}</h3> <p>No Location Points found!</p>")
             return
 
         sector_points_provider = sector_points.dataProvider()
-        attributes = self.pointsLayer.dataProvider().fields().toList()
+        attributes = self.points_layer.dataProvider().fields().toList()
         sector_points_provider.addAttributes(attributes)
         sector_points.updateFields()
         sector_points_provider.addFeatures(join_features)
+
+        selectedSymbol = QgsStyle.defaultStyle().symbol('honeycomb faux 3d')
+        selectedSymbol.setSize(2.8)
+        sector_points.renderer().setSymbol(selectedSymbol)
+        sector_points.triggerRepaint()
                 
+        self.prev_id = sector_points.id()
         QgsProject.instance().addMapLayer(sector_points)
+        self.memory_layers.append(sector_points.id())
         self.iface.showAttributeTable(sector_points)        
         
     def canvasPressEvent(self, e):
         self.clearSector()
+        self.hidePrevQueriedPointLayer()
 
-        point = self.toMapCoordinates(self.canvas.mouseLastXY())
-        self.x = point[0]
-        self.y = point[1]
-        print ('Sector - ({:.4f}, {:.4f})'.format(self.x, self.y))
+        click_point = self.toMapCoordinates(self.canvas.mouseLastXY())
+        x, y = click_point[0], click_point[1]
+        print (f'Sector - ({x:.4f}, {y:.4f})')
 
-        n = self.identifySector()
-        self.getNamesInPolygon(n)
+        n = self.identifySector(x, y)
+        self.drawSector(n)
+        self.querySectorPoints(self.getNameFromIndex(n))
 
     def keyReleaseEvent(self, e):
         try:
             if(chr(e.key()) == 'Q'):
-                self.clearSector()
-                self.clearCanvas()
+                ret = QMessageBox.question(None, '', "Do you want to clear all Scratch Layers before quitting?", 
+                        QMessageBox.Yes | QMessageBox.No)
+                if ret == QMessageBox.Yes:
+                    warning_ret = QMessageBox.warning(None, '', "The following operation will permanently remove all Scratch Layers. Do you wish to Proceed?",
+                        QMessageBox.Yes | QMessageBox.No)
+                    if warning_ret == QMessageBox.Yes:
+                        self.clearSector()
+                        self.clearCanvas()
                 self.canvas.unsetMapTool(self)
-            elif(chr(e.key()) == 'D'):
-                self.clearSector()
-                self.clearCanvas()
-
-                circle_spec = importlib.util.spec_from_file_location("draw_circle", approot+"/query-places/draw_circle.py")
-                draw_circle_file = importlib.util.module_from_spec(circle_spec)
-                circle_spec.loader.exec_module(draw_circle_file)
-
-                canvas_clicked = draw_circle_file.DrawSectorCircle(self.iface.mapCanvas(), self.iface)
-                self.iface.mapCanvas().setMapTool(canvas_clicked)
         except ValueError:
             pass
-

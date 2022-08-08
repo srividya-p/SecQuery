@@ -52,8 +52,9 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         self.radiusKm.valueChanged.connect(self.radiusKmChanged)
         self.radiusMapUnits.setButtonSymbols(2)
 
-        self.crsSelect.setOptionVisible(self.crsSelect.CrsNotSet, True)
-        self.crsSelect.setNotSetText('Select a CRS')
+        self.crsSelect.setOptionVisible(5, False)
+        self.crsSelect.setOptionVisible(1, False)
+        self.crsSelect.setCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
 
         self.layerCombobox.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.layerCombobox.setShowCrs(True)
