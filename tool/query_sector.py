@@ -131,23 +131,40 @@ class QuerySectorPlaces(QgsMapTool):
 
         sector_num = int(angle//((2*pi)/16)) 
 
-        print(math.degrees(angle), sector_num)
         self.drawSector(sector_num, self.radius)
         return f"{self.alpha_map[sector_num]} ({self.direction_map[sector_num]})" 
 
     def getNamesInPolygon(self, n):
-        places_in_sector = ''
+        layer_name = f'Sector {n} Center ({self.center_x:.3f}, {self.center_y:.3f}) Points'
+        existingLayers = QgsProject.instance().mapLayersByName(layer_name)
+
+        if len(existingLayers) > 0:
+            self.iface.showAttributeTable(existingLayers[0])
+            return
+
+        sector_points = QgsVectorLayer('Point', layer_name, 'memory')
+        join_features = []
+        feature_count = 0
+
         for a in self.sector_layer.getFeatures():
             for b in self.pointsLayer.getFeatures():
                 if a.geometry().contains(b.geometry()):
-                    places_in_sector += str(b['name'])+'<br>'
+                    join_features.append(b)
+                    feature_count += 1
 
-        if(places_in_sector == ''):
-            places_in_sector = 'No Places Found!'
+        if feature_count == 0:
+            QMessageBox().information(None, "SecQuery", f"<h3>Sector {n}</h3> <p>No Location Points found!</p>")
+            return
 
-        msg = QMessageBox()
-        msg.information(None, "Places", f"<h4>Sector {n}</h4>"+places_in_sector)
-
+        sector_points_provider = sector_points.dataProvider()
+        attributes = self.pointsLayer.dataProvider().fields().toList()
+        sector_points_provider.addAttributes(attributes)
+        sector_points.updateFields()
+        sector_points_provider.addFeatures(join_features)
+                
+        QgsProject.instance().addMapLayer(sector_points)
+        self.iface.showAttributeTable(sector_points)        
+        
     def canvasPressEvent(self, e):
         self.clearSector()
 
