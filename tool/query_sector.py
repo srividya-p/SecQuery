@@ -26,12 +26,9 @@ from qgis.gui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-import importlib.util
 import processing
 import math
 pi = math.pi
-
-approot = QgsProject.instance().homePath()
 
 class QuerySectorPlaces(QgsMapTool):
     def __init__(self, iface, center_point, radius, merged_diameters_id, circle_id, points_layer):
