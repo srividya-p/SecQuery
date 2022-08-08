@@ -37,19 +37,19 @@ class DrawSectorCircle():
     def __init__(self, iface):
         self.iface = iface
         self.canvas = iface.mapCanvas()
-        self.inpDialog = InputDialog(self.canvas)
-        self.inpDialog.inputDataSignal.connect(self.processInputDataSignal)
+        self.inp_dialog = InputDialog(self.canvas)
+        self.inp_dialog.inputDataSignal.connect(self.processInputDataSignal)
         self.progress = 0
     
     def increaseProgress(self):
         self.progress += 10
-        self.inpDialog.progressBar.setValue(self.progress)
+        self.inp_dialog.progressBar.setValue(self.progress)
 
-    def getCircleLayer(self, radius, centerX, centerY):
+    def getCircleLayer(self, radius, center_x, center_y):
         circle = QgsVectorLayer("Polygon", "Circle", "memory")
         feature = QgsFeature()
         feature.setGeometry(QgsGeometry.fromPointXY(
-            QgsPointXY(centerX, centerY)).buffer(radius, 20))
+            QgsPointXY(center_x, center_y)).buffer(radius, 20))
         provider = circle.dataProvider()
         circle.startEditing()
         provider.addFeatures([feature])
@@ -62,13 +62,13 @@ class DrawSectorCircle():
 
         return circle
 
-    def getSectorLineLayers(self, radius, centerX, centerY):
+    def getSectorLineLayers(self, radius, center_x, center_y):
         line_layers = []
         for n in range(8):
-            line_start = QgsPointXY(centerX-(radius*math.cos((2*n*pi + pi)/16)),
-                                    centerY-(radius*math.sin((2*n*pi + pi)/16)))
-            line_end = QgsPointXY(centerX+(radius*math.cos((2*n*pi + pi)/16)),
-                                  centerY+(radius*math.sin((2*n*pi + pi)/16)))
+            line_start = QgsPointXY(center_x-(radius*math.cos((2*n*pi + pi)/16)),
+                                    center_y-(radius*math.sin((2*n*pi + pi)/16)))
+            line_end = QgsPointXY(center_x+(radius*math.cos((2*n*pi + pi)/16)),
+                                  center_y+(radius*math.sin((2*n*pi + pi)/16)))
 
             line = QgsVectorLayer("LineString", "Diameter "+str(n+1), "memory")
             seg = QgsFeature()
@@ -98,32 +98,31 @@ class DrawSectorCircle():
 
         return merged_diameters
 
-    def setLayerCrs(self, pointsLayer, pointCrs):
-        if not pointCrs.isValid():
+    def setLayerCrs(self, points_layer, point_crs):
+        if not point_crs.isValid():
             defaultCrs = QgsCoordinateReferenceSystem('EPSG:4326')
-            pointsLayer.setCrs(defaultCrs, True)
-        pointsLayer.setCrs(pointCrs, True)
+            points_layer.setCrs(defaultCrs, True)
+        points_layer.setCrs(point_crs, True)
 
-    def processInputDataSignal(self, radius, pointsLayer, pointCrs, centerX, centerY):
-        circle = self.getCircleLayer(radius, centerX, centerY)
+    def processInputDataSignal(self, radius, points_layer, point_crs, center_x, center_y):
+        circle = self.getCircleLayer(radius, center_x, center_y)
         QgsProject.instance().addMapLayer(circle)
         self.increaseProgress()
         
-        line_layers = self.getSectorLineLayers(radius, centerX, centerY)
+        line_layers = self.getSectorLineLayers(radius, center_x, center_y)
         merged_diameters = self.getMergedDiameters(line_layers)
         QgsProject.instance().addMapLayer(merged_diameters)
         self.increaseProgress()
 
-        self.setLayerCrs(pointsLayer, pointCrs)
-        self.inpDialog.hide()
+        self.setLayerCrs(points_layer, point_crs)
+        self.inp_dialog.hide()
         self.iface.messageBar().pushMessage("Sectors Drawn",
                                            "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
-        query_places = QuerySectorPlaces(self.iface, [centerX, centerY], 
-                radius, merged_diameters.id(), circle.id(), pointsLayer)
+        query_places = QuerySectorPlaces(self.iface, [center_x, center_y], 
+                radius, merged_diameters.id(), circle.id(), points_layer)
         
         self.iface.mapCanvas().setMapTool(query_places)
 
     def run(self):
-        self.inpDialog.exec_()
-
+        self.inp_dialog.exec_()

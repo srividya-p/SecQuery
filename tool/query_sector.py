@@ -145,13 +145,13 @@ class QuerySectorPlaces(QgsMapTool):
 
     def querySectorPoints(self, sector_name):
         layer_name = f'Sector {sector_name} Center ({self.center_x:.3f}, {self.center_y:.3f}) Points'
-        existingLayers = QgsProject.instance().mapLayersByName(layer_name)
+        existing_layers = QgsProject.instance().mapLayersByName(layer_name)
 
-        if len(existingLayers) > 0:
-            self.prev_id = existingLayers[0].id()
+        if len(existing_layers) > 0:
+            self.prev_id = existing_layers[0].id()
             prevLayer = QgsProject.instance().layerTreeRoot().findLayer(self.prev_id)
             prevLayer.setItemVisibilityChecked(True)
-            self.iface.showAttributeTable(existingLayers[0])
+            self.iface.showAttributeTable(existing_layers[0])
             return
 
         sector_points = QgsVectorLayer('Point', layer_name, 'memory')
@@ -174,9 +174,9 @@ class QuerySectorPlaces(QgsMapTool):
         sector_points.updateFields()
         sector_points_provider.addFeatures(join_features)
 
-        selectedSymbol = QgsStyle.defaultStyle().symbol('honeycomb faux 3d')
-        selectedSymbol.setSize(2.8)
-        sector_points.renderer().setSymbol(selectedSymbol)
+        selected_symbol = QgsStyle.defaultStyle().symbol('honeycomb faux 3d')
+        selected_symbol.setSize(2.8)
+        sector_points.renderer().setSymbol(selected_symbol)
         sector_points.triggerRepaint()
                 
         self.prev_id = sector_points.id()
