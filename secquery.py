@@ -29,7 +29,7 @@ from .resources import *
 
 # Import the code for the DockWidget
 from secquery.ui.secquery_dockwidget import SecQueryDockWidget
-from secquery.tool.draw_circle import DrawSectorCircle
+from secquery.tool.draw_circle import SectorRenderer
 import os.path
 
 
@@ -215,5 +215,5 @@ class SecQuery:
             self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
 
-        self.drawTool = DrawSectorCircle(self.iface)
+        self.drawTool = SectorRenderer(self.iface)
         self.drawTool.run()

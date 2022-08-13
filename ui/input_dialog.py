@@ -31,6 +31,8 @@ from PyQt5.QtGui import *
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
 
+from secquery.utils.utility_functions import DISTANCE_LABELS
+
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'input_dialog.ui'))
 
@@ -38,7 +40,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 class InputDialog(QtWidgets.QDialog, FORM_CLASS):
 
     closingPlugin = pyqtSignal()
-    inputDataSignal = pyqtSignal(float, QgsVectorLayer, QgsCoordinateReferenceSystem, float, float)
+    inputDataSignal = pyqtSignal(float, int, int, QgsVectorLayer, QgsCoordinateReferenceSystem, float, float)
 
     def __init__(self, canvas, parent=None):
         """Constructor."""
@@ -49,8 +51,8 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         self.pointTool = QgsMapToolEmitPoint(self.canvas)
         self.renderContext = QgsRenderContext().fromMapSettings(self.canvas.mapSettings())
         
-        self.radiusKm.valueChanged.connect(self.radiusKmChanged)
-        self.radiusMapUnits.setButtonSymbols(2)
+        self.unitsCombobox.addItems(DISTANCE_LABELS)
+        self.unitsCombobox.setCurrentText('Meters')
 
         self.crsSelect.setOptionVisible(5, False)
         self.crsSelect.setOptionVisible(1, False)
@@ -109,13 +111,10 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         self.centerYInput.setText(str(point[1]))
         self.canvas.unsetMapTool(self.pointTool)
 
-    def radiusKmChanged(self):
-        km = self.radiusKm.value()
-        mapUnits = self.renderContext.convertMetersToMapUnits(km * 1000)
-        self.radiusMapUnits.setValue(mapUnits)
-
     def emitInputData(self):
-        radius = self.radiusMapUnits.value()
+        radius = self.radiusInput.value()
+        units = self.unitsCombobox.currentIndex()
+        segments = self.segmentsInput.value()
         pointsLayer = self.layerCombobox.currentLayer()
         pointCrs = self.crsSelect.crs()
         centerXText = self.centerXInput.text()
@@ -125,7 +124,7 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         if not centerValid:
             return
 
-        self.inputDataSignal.emit(radius, pointsLayer, pointCrs, centerX, centerY)
+        self.inputDataSignal.emit(radius, units, segments, pointsLayer, pointCrs, centerX, centerY)
     
     def closeEvent(self, event):
         self.closingPlugin.emit()
