@@ -139,6 +139,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="labelCheckbox">
+              <property name="text">
+               <string>Show Direction Labels</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="verticalSpacer">
               <property name="orientation">
                <enum>Qt::Vertical</enum>

@@ -80,7 +80,7 @@ class QuerySectorPlaces(QgsMapTool):
 
         return startAzimuth, endAzimuth
 
-    def drawSector(self, n):
+    def drawSector(self, n, sector_name):
         center_feature = QgsFeature()
         center_feature.setGeometry(QgsGeometry.fromPointXY(
             QgsPointXY(self.center_x, self.center_y)))
@@ -89,7 +89,7 @@ class QuerySectorPlaces(QgsMapTool):
                     self.units, self.segments, startAzimuth, endAzimuth)
 
         sector = getMemoryLayerFromFeatures(geodesic_center_feature, 
-            layerType='Polygon', layerName=f'Sector {n + 1}')
+            layerType='Polygon', layerName=f'Sector {sector_name}')
         
         style = {'style': 'no', 'outline_style': 'solid', 'outline_width': '0.7', 'outline_color': 'blue'}
         styled_sector = styleLayer(sector, style)
@@ -157,8 +157,9 @@ class QuerySectorPlaces(QgsMapTool):
         x, y = click_point[0], click_point[1]
 
         n = self.identifySector(x, y)
-        self.drawSector(n)
-        self.generateQueriedPointsLayer(self.label_dict[n])
+        sector_name = self.label_dict[n]
+        self.drawSector(n, sector_name)
+        self.generateQueriedPointsLayer(sector_name)
 
     def keyReleaseEvent(self, e):
         try:

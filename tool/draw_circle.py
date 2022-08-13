@@ -93,13 +93,16 @@ class SectorRenderer():
 
         return sectors
 
+    def getDirectionLabels(self):
+        print('Drawing Labels...')
+
     def setLayerCrs(self, points_layer, point_crs):
         if not point_crs.isValid():
             defaultCrs = QgsCoordinateReferenceSystem('EPSG:4326')
             points_layer.setCrs(defaultCrs, True)
         points_layer.setCrs(point_crs, True)
 
-    def processInputDataSignal(self, radius, units, segments, points_layer, point_crs, center_x, center_y):
+    def processInputDataSignal(self, radius, units, segments, showLabels, points_layer, point_crs, center_x, center_y):
         circle = self.getCircleLayer(radius, center_x, center_y, units, segments)
         QgsProject.instance().addMapLayer(circle)
         self.increaseProgress()
@@ -108,6 +111,9 @@ class SectorRenderer():
         sectors = self.getMergedDiameters(line_layers)
         QgsProject.instance().addMapLayer(sectors)
         self.increaseProgress()
+
+        # if showLabels:
+        #     label_layer = self.getDirectionLabels()
 
         self.setLayerCrs(points_layer, point_crs)
         self.inp_dialog.hide()

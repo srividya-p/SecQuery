@@ -40,7 +40,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 class InputDialog(QtWidgets.QDialog, FORM_CLASS):
 
     closingPlugin = pyqtSignal()
-    inputDataSignal = pyqtSignal(float, int, int, QgsVectorLayer, QgsCoordinateReferenceSystem, float, float)
+    inputDataSignal = pyqtSignal(float, int, int, bool, QgsVectorLayer, QgsCoordinateReferenceSystem, float, float)
 
     def __init__(self, canvas, parent=None):
         """Constructor."""
@@ -115,6 +115,7 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         radius = self.radiusInput.value()
         units = self.unitsCombobox.currentIndex()
         segments = self.segmentsInput.value()
+        showLabels = self.labelCheckbox.isChecked()
         pointsLayer = self.layerCombobox.currentLayer()
         pointCrs = self.crsSelect.crs()
         centerXText = self.centerXInput.text()
@@ -124,7 +125,7 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         if not centerValid:
             return
 
-        self.inputDataSignal.emit(radius, units, segments, pointsLayer, pointCrs, centerX, centerY)
+        self.inputDataSignal.emit(radius, units, segments, showLabels, pointsLayer, pointCrs, centerX, centerY)
     
     def closeEvent(self, event):
         self.closingPlugin.emit()
