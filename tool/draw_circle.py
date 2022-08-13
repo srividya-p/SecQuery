@@ -30,9 +30,11 @@ import processing
 import math
 pi = math.pi
 
+from .sector_config import DIVISIONS, DIVISION_LENGTH
 from .query_sector import QuerySectorPlaces
 from secquery.ui.input_dialog import InputDialog 
 from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
+from secquery.utils.geodesic_line import getGeodesicLineFeature
 from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLayer
 
 class SectorRenderer():
@@ -41,13 +43,14 @@ class SectorRenderer():
         self.canvas = iface.mapCanvas()
         self.inp_dialog = InputDialog(self.canvas)
         self.inp_dialog.inputDataSignal.connect(self.processInputDataSignal)
+        self.style = {'style': 'no', 'outline_style': 'solid', 'outline_width': '0.5', 'outline_color': 'black'}
         self.progress = 0
     
     def increaseProgress(self):
         self.progress += 10
         self.inp_dialog.progressBar.setValue(self.progress)
 
-    def getCircleLayer(self, radius, center_x, center_y, units=1, segments=30, startAzimuth=0, endAzimuth=360):
+    def getCircleLayer(self, radius, center_x, center_y, units = 1, segments = 30, startAzimuth = 0, endAzimuth = 360):
         center_feature = QgsFeature()
         center_feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(center_x, center_y)))
         geodesic_center_feature = getGeodesicPieWedgeFeature(center_feature, radius, 
@@ -56,46 +59,39 @@ class SectorRenderer():
         circle = getMemoryLayerFromFeatures(geodesic_center_feature, 
             layerType='Polygon', layerName='Geodesic Buffer')
         
-        style = {'style': 'no', 'outline_style': 'solid', 'outline_width': '0.5', 'outline_color': 'black'}
-        styled_circle = styleLayer(circle, style)
+        styled_circle = styleLayer(circle, self.style)
 
         return styled_circle
 
-    def getSectorLineLayers(self, radius, center_x, center_y):
+    def getSectorLineLayers(self, radius, center_x, center_y, units = 1, azimuth = DIVISION_LENGTH / 2):
         line_layers = []
-        for n in range(8):
-            line_start = QgsPointXY(center_x-(radius*math.cos((2*n*pi + pi)/16)),
-                                    center_y-(radius*math.sin((2*n*pi + pi)/16)))
-            line_end = QgsPointXY(center_x+(radius*math.cos((2*n*pi + pi)/16)),
-                                  center_y+(radius*math.sin((2*n*pi + pi)/16)))
+        center_feature = QgsFeature()
+        for n in range(DIVISIONS):
+            center_feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(center_x, center_y)))
+            geodesic_line_feature = getGeodesicLineFeature(center_feature, 
+                radius, units, azimuth)
 
-            line = QgsVectorLayer("LineString", "Diameter "+str(n+1), "memory")
-            seg = QgsFeature()
-            seg.setGeometry(QgsGeometry.fromPolylineXY([line_start, line_end]))
-            provider = line.dataProvider()
-            line.startEditing()
-            provider.addFeatures([seg])
-            line.commitChanges()
-
-            line.renderer().symbol().setColor(QColor("black"))
-            line.triggerRepaint()
-
-            line_layers.append(line)
+            line = getMemoryLayerFromFeatures(geodesic_line_feature, 
+                layerType='LineString', layerName=f'Radius {n + 1}')
+            
+            styled_line = styleLayer(line, self.style)
+            line_layers.append(styled_line)
             self.increaseProgress()
+            azimuth += DIVISION_LENGTH
         
         return line_layers
             
     def getMergedDiameters(self, line_layers):
         parameters = {
             'LAYERS': line_layers, 
-            'OUTPUT': "memory:Diameters"
+            'OUTPUT': "memory:Sectors"
         }
 
-        merged_diameters = processing.run("qgis:mergevectorlayers", parameters)["OUTPUT"]
-        merged_diameters.renderer().symbol().setColor(QColor("black"))
-        merged_diameters.triggerRepaint()
+        sectors = processing.run("qgis:mergevectorlayers", parameters)["OUTPUT"]
+        sectors.renderer().symbol().setColor(QColor("black"))
+        sectors.triggerRepaint()
 
-        return merged_diameters
+        return sectors
 
     def setLayerCrs(self, points_layer, point_crs):
         if not point_crs.isValid():
@@ -108,20 +104,20 @@ class SectorRenderer():
         QgsProject.instance().addMapLayer(circle)
         self.increaseProgress()
         
-        # line_layers = self.getSectorLineLayers(radius, center_x, center_y)
-        # merged_diameters = self.getMergedDiameters(line_layers)
-        # QgsProject.instance().addMapLayer(merged_diameters)
-        # self.increaseProgress()
+        line_layers = self.getSectorLineLayers(radius, center_x, center_y)
+        sectors = self.getMergedDiameters(line_layers)
+        QgsProject.instance().addMapLayer(sectors)
+        self.increaseProgress()
 
-        # self.setLayerCrs(points_layer, point_crs)
-        # self.inp_dialog.hide()
-        # self.iface.messageBar().pushMessage("Sectors Drawn",
-        #                                    "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
+        self.setLayerCrs(points_layer, point_crs)
+        self.inp_dialog.hide()
+        self.iface.messageBar().pushMessage("Sectors Drawn",
+                                           "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
-        # query_places = QuerySectorPlaces(self.iface, [center_x, center_y], 
-        #         radius, merged_diameters.id(), circle.id(), points_layer)
+        query_places = QuerySectorPlaces(self.iface, [center_x, center_y], 
+                radius, sectors.id(), circle.id(), points_layer)
         self.canvas.setExtent(circle.extent())
-        # self.canvas.setMapTool(query_places)
+        self.canvas.setMapTool(query_places)
 
     def run(self):
         self.inp_dialog.exec_()

@@ -1,3 +1,4 @@
+from string import ascii_uppercase
 from qgis.core import (QgsUnitTypes, QgsVectorLayer, QgsFillSymbol)
 from qgis.PyQt.QtCore import QCoreApplication
 
@@ -67,3 +68,19 @@ def styleLayer(layer, style):
     layer.renderer().setSymbol(symbol)
     layer.triggerRepaint()
     return layer
+
+def getLabelDict(divisions):
+    if divisions < 27:
+        if divisions == 4:
+            return {0: 'A (N)', 1:'B (E)', 2:'C (S)', 3:'D (W)'}
+        
+        if divisions == 8:
+            return {0: 'A (N)', 1:'B (NE)', 2:'C (E)', 3:'D (SE)', 4: 'E (S)', 5:'F (SW)', 6:'G (W)', 7:'H (SW)'}
+        
+        if divisions == 16:
+            return {0:'A (N)', 1:'B (NNE)', 2:'C (NE)', 3:'D (ENE)', 4:'E (E)', 5:'F (ESE)', 6:'G (SE)', 7:'H (SSE)',
+                            8:'I (S)', 9:'J (SSW)', 10:'K (SW)', 11:'L (WSW)', 12:'M (W)', 13:'N (WNW)', 14:'O (NW)', 15:'P (NNW)'}
+
+        return {k:v for k,v in zip(range(divisions), ascii_uppercase[0:divisions])}
+    else:
+        return {k:v for k,v in zip(range(divisions), [str(n) for n in range(divisions)])}

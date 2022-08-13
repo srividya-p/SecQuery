@@ -5,7 +5,7 @@ from qgis.core import (
     QgsPointXY, QgsGeometry, QgsProject)
 
 from .crs_vars import epsg4326, geodesic
-from .utility_functions import conversionFactorToMeters, makeIntDateLineCrossingsPositive, DISTANCE_LABELS
+from .utility_functions import conversionFactorToMeters, makeIntDateLineCrossingsPositive
 
 def getGeodesicPieWedgeFeature(centerFeature, radius, units, segments, startAzimuth, endAzimuth):
     radius_meters = radius * conversionFactorToMeters(units)
@@ -18,7 +18,6 @@ def getGeodesicPieWedgeFeature(centerFeature, radius, units, segments, startAzim
 
     points = []
     point = centerFeature.geometry().asPoint()
-    point_orig_x, point_orig_y = point.x(), point.y()
     
     if e_angle != 360.0:
         points.append(point)

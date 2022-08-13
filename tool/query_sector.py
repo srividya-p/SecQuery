@@ -30,6 +30,10 @@ import processing
 import math
 pi = math.pi
 
+from .sector_config import DIVISIONS, DIVISION_LENGTH
+from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
+from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLayer, getLabelDict
+
 class QuerySectorPlaces(QgsMapTool):
     def __init__(self, iface, center_point, radius, merged_diameters_id, circle_id, points_layer):
         self.iface = iface
@@ -45,10 +49,7 @@ class QuerySectorPlaces(QgsMapTool):
         self.prev_id = None
         self.memory_layers = []
         
-        self.direction_map = {0:'ENE', 1:'NE', 2:'NNE', 3:'N', 4:'NNW', 5:'NW', 6:'WNW', 7:'W',
-                            8:'WSW', 9:'SW', 10:'SSW', 11:'S', 12:'SSE', 13:'SE', 14:'ESE', 15:'E'}
-        self.alpha_map = {0:'D', 1:'C', 2:'B', 3:'A', 4:'P', 5:'O', 6:'N', 7:'M',
-                            8:'L', 9:'K', 10:'J', 11:'I', 12:'H', 13:'G', 14:'F', 15:'E'}
+        self.label_dict = getLabelDict(DIVISIONS)
         
         QgsMapToolEmitPoint.__init__(self, self.canvas)
 
@@ -67,9 +68,6 @@ class QuerySectorPlaces(QgsMapTool):
         if self.prev_id != None:
             prevLayer = QgsProject.instance().layerTreeRoot().findLayer(self.prev_id)
             prevLayer.setItemVisibilityChecked(False)
-
-    def getNameFromIndex(self, index):
-        return f"{self.alpha_map[index]} ({self.direction_map[index]})" 
 
     def drawSector(self, n):
         arc_start = [self.center_x+(self.radius*math.cos((2*n*pi + pi)/16)),
@@ -131,13 +129,13 @@ class QuerySectorPlaces(QgsMapTool):
     def identifySector(self, x, y):
         dy = y - self.center_y
         dx = x - self.center_x
-        angle = math.atan2(dy, dx)
-        angle -= pi/16
+        angle = math.atan2(dx, dy)
+        angle += pi / DIVISIONS
 
         if angle < 0:
             angle += 2*pi
 
-        sector_num = int(angle//((2*pi)/16))
+        sector_num = int(angle//((2*pi) / DIVISIONS))
         return sector_num
 
     def querySectorPoints(self, sector_name):
@@ -190,8 +188,9 @@ class QuerySectorPlaces(QgsMapTool):
         print (f'Sector - ({x:.4f}, {y:.4f})')
 
         n = self.identifySector(x, y)
-        self.drawSector(n)
-        self.querySectorPoints(self.getNameFromIndex(n))
+        print(n)
+        # self.drawSector(n)
+        # self.querySectorPoints(self.label_dict[n])
 
     def keyReleaseEvent(self, e):
         try:
