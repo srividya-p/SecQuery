@@ -12,16 +12,15 @@ maxSegmentLength = 20 * 1000.0
 
 def getGeodesicLineFeature(lineStartFeature, length, units, azimuth):
     length_meters = length * conversionFactorToMeters(units)
-    
     point = lineStartFeature.geometry().asPoint()
     point_orig_x, point_orig_y = point.x(), point.y()
 
     geodesic_line = geodesic.Line(point.y(), point.x(), azimuth)
-    n = int(math.ceil(length / maxSegmentLength))
+    n = int(math.ceil(length_meters / maxSegmentLength))
 
     if n > maxSegments:
         n = self.maxSegments
-    segmentLength = length / n
+    segmentLength = length_meters / n
 
     points = [point]
     for i in range(1, n + 1):

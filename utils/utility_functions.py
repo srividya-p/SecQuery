@@ -10,7 +10,7 @@ DISTANCE_LABELS = [tr("Centimeters"), tr("Meters"), tr("Kilometers"), tr("Inches
 
 def conversionFactorToMeters(units):
     # Centimeters
-    if units == 0: 
+    if units == 0:
         measureFactor = QgsUnitTypes.fromUnitToUnitFactor(QgsUnitTypes.DistanceCentimeters, QgsUnitTypes.DistanceMeters)
     # Meters
     elif units == 1:

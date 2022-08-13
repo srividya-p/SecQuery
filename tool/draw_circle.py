@@ -107,7 +107,7 @@ class SectorRenderer():
         QgsProject.instance().addMapLayer(circle)
         self.increaseProgress()
         
-        line_layers = self.getSectorLineLayers(radius, center_x, center_y)
+        line_layers = self.getSectorLineLayers(radius, center_x, center_y, units)
         sectors = self.getMergedDiameters(line_layers)
         QgsProject.instance().addMapLayer(sectors)
         self.increaseProgress()
