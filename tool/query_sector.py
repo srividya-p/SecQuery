@@ -35,12 +35,14 @@ from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
 from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLayer, getLabelDict
 
 class QuerySectorPlaces(QgsMapTool):
-    def __init__(self, iface, center_point, radius, merged_diameters_id, circle_id, points_layer):
+    def __init__(self, iface, center_point, radius, units, segments, merged_diameters_id, circle_id, points_layer):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.center_x = center_point[0]
         self.center_y = center_point[1]
         self.radius = radius
+        self.units = units
+        self.segments = segments
         self.circle_id = circle_id
         self.merged_diameters_id = merged_diameters_id
 
@@ -69,62 +71,30 @@ class QuerySectorPlaces(QgsMapTool):
             prevLayer = QgsProject.instance().layerTreeRoot().findLayer(self.prev_id)
             prevLayer.setItemVisibilityChecked(False)
 
+    def getAzimuthRangeFromSectorNumber(self, n):
+        startAzimuth = n * DIVISION_LENGTH - DIVISION_LENGTH / 2
+        endAzimuth = n * DIVISION_LENGTH + DIVISION_LENGTH / 2
+
+        if startAzimuth < 0: startAzimuth += 360.0
+        if endAzimuth < 0: endAzimuth += 360.0
+
+        return startAzimuth, endAzimuth
+
     def drawSector(self, n):
-        arc_start = [self.center_x+(self.radius*math.cos((2*n*pi + pi)/16)),
-                     self.center_y+(self.radius*math.sin((2*n*pi + pi)/16))]
-        arc_end = [self.center_x+(self.radius*math.cos((2*(n+1)*pi + pi)/16)),
-                   self.center_y+(self.radius*math.sin((2*(n+1)*pi + pi)/16))]
-        arc_mid = [self.center_x+(self.radius*math.cos((2*n*pi + 2*(n+1)*pi + pi)/32)),
-                   self.center_y+(self.radius*math.sin((2*n*pi + 2*(n+1)*pi + pi)/32))]
+        center_feature = QgsFeature()
+        center_feature.setGeometry(QgsGeometry.fromPointXY(
+            QgsPointXY(self.center_x, self.center_y)))
+        startAzimuth, endAzimuth = self.getAzimuthRangeFromSectorNumber(n)
+        geodesic_center_feature = getGeodesicPieWedgeFeature(center_feature, self.radius, 
+                    self.units, self.segments, startAzimuth, endAzimuth)
 
-        arc = QgsVectorLayer(
-            "LineString?crs=epsg:4326&field=id:integer&field=name:string(20)&index=yes", "line", "memory")
-        arc_geom = QgsCircularString()
-        arc_geom.setPoints([
-            QgsPoint(arc_start[0], arc_start[1]),
-            QgsPoint(arc_mid[0], arc_mid[1]),
-            QgsPoint(arc_end[0], arc_end[1])]
-        )
-        arc_feature = QgsFeature()
-        arc_feature.setGeometry(QgsGeometry(arc_geom))
-
-        line1_start = QgsPointXY(self.center_x, self.center_y)
-        line1_mid = QgsPointXY(
-            (self.center_x+arc_start[0])/2, (self.center_y+arc_start[1])/2)
-        line1_end = QgsPointXY(arc_start[0], arc_start[1])
-        line1 = QgsVectorLayer("LineString", "line", "memory")
-        seg1 = QgsFeature()
-        seg1.setGeometry(QgsGeometry.fromPolylineXY(
-            [line1_start, line1_mid, line1_end]))
-
-        line2_start = QgsPointXY(self.center_x, self.center_y)
-        line2_mid = QgsPointXY(
-            (self.center_x+arc_end[0])/2, (self.center_y+arc_end[1])/2)
-        line2_end = QgsPointXY(arc_end[0], arc_end[1])
-        line2 = QgsVectorLayer("LineString", "line", "memory")
-        seg2 = QgsFeature()
-        seg2.setGeometry(QgsGeometry.fromPolylineXY(
-            [line2_start, line2_mid, line2_end]))
-
-        merged = QgsVectorLayer("LineString", "Sector "+str(n+1), "memory")
-        provider = merged.dataProvider()
-
-        merged.startEditing()
-        provider.addFeatures([seg1])
-        provider.addFeatures([seg2])
-        provider.addFeatures([arc_feature])
-        merged.commitChanges()
-
-        sector = processing.run("qgis:polygonize", {
-                                'INPUT': merged, 'OUTPUT': 'memory:Sector '+str(n+1)})["OUTPUT"]
-
-        QgsProject.instance().addMapLayer(sector)
-        symbol = QgsFillSymbol.createSimple(
-            {'style': 'no', 'outline_style': 'solid', 'outline_width': '0.7', 'outline_color': 'blue'})
-        sector.renderer().setSymbol(symbol)
-        sector.triggerRepaint()
-
-        self.sector_layer = sector
+        sector = getMemoryLayerFromFeatures(geodesic_center_feature, 
+            layerType='Polygon', layerName=f'Sector {n + 1}')
+        
+        style = {'style': 'no', 'outline_style': 'solid', 'outline_width': '0.7', 'outline_color': 'blue'}
+        styled_sector = styleLayer(sector, style)
+        QgsProject.instance().addMapLayer(styled_sector)
+        self.sector_layer = styled_sector
 
     def identifySector(self, x, y):
         dy = y - self.center_y
@@ -138,7 +108,7 @@ class QuerySectorPlaces(QgsMapTool):
         sector_num = int(angle//((2*pi) / DIVISIONS))
         return sector_num
 
-    def querySectorPoints(self, sector_name):
+    def generateQueriedPointsLayer(self, sector_name):
         layer_name = f'Sector {sector_name} Center ({self.center_x:.3f}, {self.center_y:.3f}) Points'
         existing_layers = QgsProject.instance().mapLayersByName(layer_name)
 
@@ -185,12 +155,10 @@ class QuerySectorPlaces(QgsMapTool):
 
         click_point = self.toMapCoordinates(self.canvas.mouseLastXY())
         x, y = click_point[0], click_point[1]
-        print (f'Sector - ({x:.4f}, {y:.4f})')
 
         n = self.identifySector(x, y)
-        print(n)
-        # self.drawSector(n)
-        # self.querySectorPoints(self.label_dict[n])
+        self.drawSector(n)
+        self.generateQueriedPointsLayer(self.label_dict[n])
 
     def keyReleaseEvent(self, e):
         try:

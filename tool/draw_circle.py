@@ -115,7 +115,7 @@ class SectorRenderer():
                                            "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
         query_places = QuerySectorPlaces(self.iface, [center_x, center_y], 
-                radius, sectors.id(), circle.id(), points_layer)
+                radius, units, segments, sectors.id(), circle.id(), points_layer)
         self.canvas.setExtent(circle.extent())
         self.canvas.setMapTool(query_places)
 
