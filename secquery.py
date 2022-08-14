@@ -29,7 +29,7 @@ from .resources import *
 
 # Import the code for the DockWidget
 from secquery.ui.secquery_dockwidget import SecQueryDockWidget
-from secquery.tool.draw_circle import SectorRenderer
+from secquery.tool.sector_renderer import SectorRenderer
 import os.path
 
 

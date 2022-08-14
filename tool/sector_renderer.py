@@ -32,7 +32,7 @@ import math
 pi = math.pi
 
 from .sector_config import DIVISIONS, DIVISION_LENGTH
-from .query_sector import QuerySectorPlaces
+from .query_tool import QueryTool
 from secquery.ui.input_dialog import InputDialog 
 from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
 from secquery.utils.geodesic_line import getGeodesicLineFeature
@@ -162,9 +162,9 @@ class SectorRenderer():
         self.iface.messageBar().pushMessage("Sectors Drawn",
                                            "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
-        query_places = QuerySectorPlaces(self.iface, [center_x, center_y], 
+        query_places = QueryTool(self.iface, [center_x, center_y], 
                 radius, units, segments, sectors.id(), circle.id(), label_id, points_layer)
-        self.canvas.setExtent(circle.extent())
+        self.canvas.setExtent(label_layer.extent() if showLabels else circle.extent())
         self.canvas.setMapTool(query_places)
 
     def run(self):

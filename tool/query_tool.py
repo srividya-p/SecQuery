@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 /***************************************************************************
- QuerySectorPlaces 
+ QueryTool 
  SecQuery - A QGIS plugin
  This plugin is used to render a circle with 16 wind-rose sectors and query 
  the data in them.
@@ -34,7 +34,7 @@ from .sector_config import DIVISIONS, DIVISION_LENGTH
 from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
 from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLayer, getLabelDict
 
-class QuerySectorPlaces(QgsMapTool):
+class QueryTool(QgsMapTool):
     def __init__(self, iface, center_point, radius, units, segments, merged_diameters_id, circle_id, label_id, points_layer):
         self.iface = iface
         self.canvas = iface.mapCanvas()
