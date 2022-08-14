@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>693</width>
-    <height>600</height>
+    <height>611</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -66,7 +66,7 @@
              <x>10</x>
              <y>10</y>
              <width>371</width>
-             <height>441</height>
+             <height>451</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="inpVLayout">
@@ -122,21 +122,49 @@
              </layout>
             </item>
             <item>
-             <widget class="QLabel" name="label_8">
-              <property name="text">
-               <string>Buffer Segments (Optional)</string>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <item>
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Number of Sectors</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_8">
+                <property name="text">
+                 <string>Buffer Segments</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
-             <widget class="QSpinBox" name="segmentsInput">
-              <property name="minimum">
-               <number>16</number>
-              </property>
-              <property name="value">
-               <number>30</number>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <item>
+               <widget class="QSpinBox" name="noOfSectorsInput">
+                <property name="minimum">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <number>32</number>
+                </property>
+                <property name="value">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="segmentsInput">
+                <property name="minimum">
+                 <number>16</number>
+                </property>
+                <property name="value">
+                 <number>30</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QCheckBox" name="labelCheckbox">

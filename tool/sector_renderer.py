@@ -31,7 +31,6 @@ import processing
 import math
 pi = math.pi
 
-from .sector_config import DIVISIONS, DIVISION_LENGTH
 from .query_tool import QueryTool
 from secquery.ui.input_dialog import InputDialog 
 from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
@@ -46,6 +45,8 @@ class SectorRenderer():
         self.inp_dialog.inputDataSignal.connect(self.processInputDataSignal)
         self.style = {'style': 'no', 'outline_style': 'solid', 'outline_width': '0.5', 'outline_color': 'black'}
         self.progress = 0
+        self.divisions = 0
+        self.division_length = 0.0
     
     def increaseProgress(self):
         self.progress += 10
@@ -64,10 +65,10 @@ class SectorRenderer():
 
         return styled_circle
 
-    def getSectorLineLayers(self, radius, center_x, center_y, units = 1, azimuth = DIVISION_LENGTH / 2):
+    def getSectorLineLayers(self, radius, center_x, center_y, azimuth, units = 1):
         line_layers = []
         center_feature = QgsFeature()
-        for n in range(DIVISIONS):
+        for n in range(self.divisions):
             center_feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(center_x, center_y)))
             geodesic_line_feature = getGeodesicLineFeature(center_feature, 
                 radius, units, azimuth)
@@ -78,7 +79,7 @@ class SectorRenderer():
             styled_line = styleLayer(line, self.style)
             line_layers.append(styled_line)
             self.increaseProgress()
-            azimuth += DIVISION_LENGTH
+            azimuth += self.division_length
         
         return line_layers
             
@@ -141,12 +142,15 @@ class SectorRenderer():
             points_layer.setCrs(defaultCrs, True)
         points_layer.setCrs(point_crs, True)
 
-    def processInputDataSignal(self, radius, units, segments, showLabels, points_layer, point_crs, center_x, center_y):
+    def processInputDataSignal(self, radius, units, noOfSectors, segments, showLabels, points_layer, point_crs, center_x, center_y):
+        self.divisions = noOfSectors
+        self.division_length = 360.0 / noOfSectors
+        
         circle = self.getCircleLayer(radius, center_x, center_y, units, segments)
         QgsProject.instance().addMapLayer(circle)
         self.increaseProgress()
         
-        line_layers = self.getSectorLineLayers(radius, center_x, center_y, units)
+        line_layers = self.getSectorLineLayers(radius, center_x, center_y, self.division_length / 2, units)
         sectors = self.getMergedDiameters(line_layers)
         QgsProject.instance().addMapLayer(sectors)
         self.increaseProgress()
@@ -163,7 +167,7 @@ class SectorRenderer():
                                            "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
         query_places = QueryTool(self.iface, [center_x, center_y], 
-                radius, units, segments, sectors.id(), circle.id(), label_id, points_layer)
+                radius, units, segments, self.divisions, self.division_length, sectors.id(), circle.id(), label_id, points_layer)
         self.canvas.setExtent(label_layer.extent() if showLabels else circle.extent())
         self.canvas.setMapTool(query_places)
 

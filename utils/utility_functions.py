@@ -73,16 +73,19 @@ def styleLayer(layer, style):
 def getLabelDict(divisions):
     if divisions < 27:
         if divisions == 4:
-            return {0: 'A (N)', 1:'B (E)', 2:'C (S)', 3:'D (W)'}
+            dir_with_letter = [f'{l} ({d})' for l, d in zip(ascii_uppercase[0:4], 
+                [DIRECTION_LIST[i] for i in range(0, 16, 4)])]
+            return {k:v for k, v in zip(range(4), dir_with_letter)}
         
         if divisions == 8:
-            return {0: 'A (N)', 1:'B (NE)', 2:'C (E)', 3:'D (SE)', 4: 'E (S)', 5:'F (SW)', 6:'G (W)', 7:'H (SW)'}
+            dir_with_letter = [f'{l} ({d})' for l, d in zip(ascii_uppercase[0:8], 
+                [DIRECTION_LIST[i] for i in range(0, 16, 2)])]
+            return {k:v for k, v in zip(range(8), dir_with_letter)}
         
         if divisions == 16:
             dir_with_letter = [f'{l} ({d})' for l, d in zip(ascii_uppercase[0:16], DIRECTION_LIST)]
-            # return {0:'A (N)', 1:'B (NNE)', 2:'C (NE)', 3:'D (ENE)', 4:'E (E)', 5:'F (ESE)', 6:'G (SE)', 7:'H (SSE)',
-            #                 8:'I (S)', 9:'J (SSW)', 10:'K (SW)', 11:'L (WSW)', 12:'M (W)', 13:'N (WNW)', 14:'O (NW)', 15:'P (NNW)'}
             return {k:v for k, v in zip(range(16), dir_with_letter)}
+        
         return {k:v for k, v in zip(range(divisions), ascii_uppercase[0:divisions])}
     else:
-        return {k:v for k, v in zip(range(divisions), [str(n) for n in range(divisions)])}
+        return {k:v for k, v in zip(range(divisions), [str(n) for n in range(1, divisions + 1)])}

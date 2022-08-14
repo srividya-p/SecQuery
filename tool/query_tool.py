@@ -30,12 +30,12 @@ import processing
 import math
 pi = math.pi
 
-from .sector_config import DIVISIONS, DIVISION_LENGTH
 from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
 from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLayer, getLabelDict
 
 class QueryTool(QgsMapTool):
-    def __init__(self, iface, center_point, radius, units, segments, merged_diameters_id, circle_id, label_id, points_layer):
+    def __init__(self, iface, center_point, radius, units, segments, 
+                divisions, division_length, merged_diameters_id, circle_id, label_id, points_layer):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.center_x = center_point[0]
@@ -43,6 +43,8 @@ class QueryTool(QgsMapTool):
         self.radius = radius
         self.units = units
         self.segments = segments
+        self.divisions = divisions
+        self.division_length = division_length
         self.circle_id = circle_id
         self.merged_diameters_id = merged_diameters_id
         self.label_id = label_id
@@ -52,7 +54,7 @@ class QueryTool(QgsMapTool):
         self.prev_id = None
         self.memory_layers = []
         
-        self.label_dict = getLabelDict(DIVISIONS)
+        self.label_dict = getLabelDict(self.divisions)
         
         QgsMapToolEmitPoint.__init__(self, self.canvas)
 
@@ -75,8 +77,8 @@ class QueryTool(QgsMapTool):
             prevLayer.setItemVisibilityChecked(False)
 
     def getAzimuthRangeFromSectorNumber(self, n):
-        startAzimuth = n * DIVISION_LENGTH - DIVISION_LENGTH / 2
-        endAzimuth = n * DIVISION_LENGTH + DIVISION_LENGTH / 2
+        startAzimuth = n * self.division_length - self.division_length / 2
+        endAzimuth = n * self.division_length + self.division_length / 2
 
         if startAzimuth < 0: startAzimuth += 360.0
         if endAzimuth < 0: endAzimuth += 360.0
@@ -103,12 +105,12 @@ class QueryTool(QgsMapTool):
         dy = y - self.center_y
         dx = x - self.center_x
         angle = math.atan2(dx, dy)
-        angle += pi / DIVISIONS
+        angle += pi / self.divisions
 
         if angle < 0:
             angle += 2*pi
 
-        sector_num = int(angle//((2*pi) / DIVISIONS))
+        sector_num = int(angle//((2*pi) / self.divisions))
         return sector_num
 
     def generateQueriedPointsLayer(self, sector_name):
