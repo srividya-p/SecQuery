@@ -21,11 +21,11 @@
  ***************************************************************************/
 """
 
-from qgis.core import *
-from qgis.gui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+from qgis.core import (QgsVectorLayer, QgsFeature, QgsGeometry, QgsPointXY, 
+                        QgsProject, Qgis, QgsField, QgsTextFormat, QgsPalLayerSettings,
+                        QgsVectorLayerSimpleLabeling)
+from PyQt5.QtCore import (QVariant)
+from PyQt5.QtGui import (QColor, QFont)
 
 import processing
 import math

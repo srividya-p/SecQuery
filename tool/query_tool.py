@@ -21,10 +21,10 @@
  ***************************************************************************/
 """
 
-from qgis.core import *
-from qgis.gui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
+from qgis.core import (QgsVectorLayer, QgsFeature, QgsGeometry, QgsPointXY, 
+                        QgsStyle, QgsProject)
+from qgis.gui import (QgsMapTool, QgsMapToolEmitPoint)
+from PyQt5.QtWidgets import (QMessageBox)
 
 import processing
 import math
