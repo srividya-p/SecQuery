@@ -31,7 +31,7 @@ from PyQt5.QtGui import *
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
 
-from secquery.utils.utility_functions import DISTANCE_LABELS
+from secquery.utils.utility_functions import UNITS_LABELS
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'input_dialog.ui'))
@@ -51,7 +51,7 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         self.pointTool = QgsMapToolEmitPoint(self.canvas)
         self.renderContext = QgsRenderContext().fromMapSettings(self.canvas.mapSettings())
         
-        self.unitsCombobox.addItems(DISTANCE_LABELS)
+        self.unitsCombobox.addItems(UNITS_LABELS)
         self.unitsCombobox.setCurrentText('Meters')
 
         self.crsSelect.setOptionVisible(5, False)

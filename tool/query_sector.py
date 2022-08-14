@@ -35,7 +35,7 @@ from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
 from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLayer, getLabelDict
 
 class QuerySectorPlaces(QgsMapTool):
-    def __init__(self, iface, center_point, radius, units, segments, merged_diameters_id, circle_id, points_layer):
+    def __init__(self, iface, center_point, radius, units, segments, merged_diameters_id, circle_id, label_id, points_layer):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.center_x = center_point[0]
@@ -45,6 +45,7 @@ class QuerySectorPlaces(QgsMapTool):
         self.segments = segments
         self.circle_id = circle_id
         self.merged_diameters_id = merged_diameters_id
+        self.label_id = label_id
 
         self.sector_layer = QgsVectorLayer()
         self.points_layer = points_layer
@@ -58,6 +59,8 @@ class QuerySectorPlaces(QgsMapTool):
     def clearCanvas(self):
         QgsProject.instance().removeMapLayer(self.circle_id)
         QgsProject.instance().removeMapLayer(self.merged_diameters_id)
+        if self.label_id:
+            QgsProject.instance().removeMapLayer(self.label_id)
         for layer_id in self.memory_layers:
             QgsProject.instance().removeMapLayer(layer_id)
 

@@ -10,10 +10,9 @@ from .utility_functions import conversionFactorToMeters, makeIntDateLineCrossing
 maxSegments = 1000
 maxSegmentLength = 20 * 1000.0
 
-def getGeodesicLineFeature(lineStartFeature, length, units, azimuth):
+def getGeodesicLineFeature(lineStartFeature, length, units, azimuth, getCoords=False):
     length_meters = length * conversionFactorToMeters(units)
     point = lineStartFeature.geometry().asPoint()
-    point_orig_x, point_orig_y = point.x(), point.y()
 
     geodesic_line = geodesic.Line(point.y(), point.x(), azimuth)
     n = int(math.ceil(length_meters / maxSegmentLength))
@@ -29,6 +28,10 @@ def getGeodesicLineFeature(lineStartFeature, length, units, azimuth):
         points.append(QgsPointXY(g['lon2'], g['lat2']))
 
     makeIntDateLineCrossingsPositive(points)
+
+    if getCoords:
+        return points
+
     lineStartFeature.setGeometry(QgsGeometry.fromPolylineXY(points))
 
     return lineStartFeature

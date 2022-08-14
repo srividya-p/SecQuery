@@ -25,6 +25,7 @@ from qgis.core import *
 from qgis.gui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
 import processing
 import math
@@ -35,7 +36,7 @@ from .query_sector import QuerySectorPlaces
 from secquery.ui.input_dialog import InputDialog 
 from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
 from secquery.utils.geodesic_line import getGeodesicLineFeature
-from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLayer
+from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLayer, DIRECTION_LIST
 
 class SectorRenderer():
     def __init__(self, iface):
@@ -93,8 +94,46 @@ class SectorRenderer():
 
         return sectors
 
-    def getDirectionLabels(self):
-        print('Drawing Labels...')
+    def getDirectionLabels(self, radius, center_x, center_y, units = 1, azimuth = 0):
+        center_feature = QgsFeature()
+        direction_layer = QgsVectorLayer('Point', 'Directions', 'memory')
+        direction_provider = direction_layer.dataProvider()
+        direction_provider.addAttributes([QgsField("id", QVariant.Int), 
+                                          QgsField("direction", QVariant.String)])
+        direction_layer.updateFields()
+
+        for i in range(16):
+            center_feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(center_x, center_y)))
+            coords = getGeodesicLineFeature(center_feature, 
+                radius + 25, units, azimuth, getCoords=True)
+            
+            feature = QgsFeature()
+            feature.setGeometry(QgsGeometry.fromPointXY(coords[-1]))
+            feature.setAttributes([i, DIRECTION_LIST[i]])
+            direction_provider.addFeature(feature)
+            direction_layer.updateExtents()
+            
+            azimuth += 22.5
+
+        text_format = QgsTextFormat()
+        text_format.setFont(QFont("Arial", 12))
+        text_format.setSize(12)
+        
+        label_settings = QgsPalLayerSettings()
+        label_settings.enabled = True
+        label_settings.fieldName = 'direction'
+        label_settings.placement = QgsPalLayerSettings.OverPoint
+        label_settings.setFormat(text_format)
+
+        dir_layer_settings = QgsVectorLayerSimpleLabeling(label_settings)
+        direction_layer.setLabelsEnabled(True)
+        direction_layer.setLabeling(dir_layer_settings)
+        direction_layer.triggerRepaint()
+
+        style = {'size':'0'}
+        styled_direction_layer = styleLayer(direction_layer, style)
+
+        return direction_layer
 
     def setLayerCrs(self, points_layer, point_crs):
         if not point_crs.isValid():
@@ -112,8 +151,11 @@ class SectorRenderer():
         QgsProject.instance().addMapLayer(sectors)
         self.increaseProgress()
 
-        # if showLabels:
-        #     label_layer = self.getDirectionLabels()
+        label_id = None
+        if showLabels:
+            label_layer = self.getDirectionLabels(radius, center_x, center_y, units)
+            QgsProject.instance().addMapLayer(label_layer)
+            label_id = label_layer.id()
 
         self.setLayerCrs(points_layer, point_crs)
         self.inp_dialog.hide()
@@ -121,7 +163,7 @@ class SectorRenderer():
                                            "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
         query_places = QuerySectorPlaces(self.iface, [center_x, center_y], 
-                radius, units, segments, sectors.id(), circle.id(), points_layer)
+                radius, units, segments, sectors.id(), circle.id(), label_id, points_layer)
         self.canvas.setExtent(circle.extent())
         self.canvas.setMapTool(query_places)
 

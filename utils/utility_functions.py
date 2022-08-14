@@ -6,7 +6,8 @@ def tr(string):
     return QCoreApplication.translate('@default', string)
 
 
-DISTANCE_LABELS = [tr("Centimeters"), tr("Meters"), tr("Kilometers"), tr("Inches"), tr("Feet"), tr("Miles"), tr("Nautical Miles"), tr('Yards')]
+UNITS_LABELS = [tr("Centimeters"), tr("Meters"), tr("Kilometers"), tr("Inches"), tr("Feet"), tr("Miles"), tr("Nautical Miles"), tr('Yards')]
+DIRECTION_LIST = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 
 def conversionFactorToMeters(units):
     # Centimeters
@@ -78,9 +79,10 @@ def getLabelDict(divisions):
             return {0: 'A (N)', 1:'B (NE)', 2:'C (E)', 3:'D (SE)', 4: 'E (S)', 5:'F (SW)', 6:'G (W)', 7:'H (SW)'}
         
         if divisions == 16:
-            return {0:'A (N)', 1:'B (NNE)', 2:'C (NE)', 3:'D (ENE)', 4:'E (E)', 5:'F (ESE)', 6:'G (SE)', 7:'H (SSE)',
-                            8:'I (S)', 9:'J (SSW)', 10:'K (SW)', 11:'L (WSW)', 12:'M (W)', 13:'N (WNW)', 14:'O (NW)', 15:'P (NNW)'}
-
-        return {k:v for k,v in zip(range(divisions), ascii_uppercase[0:divisions])}
+            dir_with_letter = [f'{l} ({d})' for l, d in zip(ascii_uppercase[0:16], DIRECTION_LIST)]
+            # return {0:'A (N)', 1:'B (NNE)', 2:'C (NE)', 3:'D (ENE)', 4:'E (E)', 5:'F (ESE)', 6:'G (SE)', 7:'H (SSE)',
+            #                 8:'I (S)', 9:'J (SSW)', 10:'K (SW)', 11:'L (WSW)', 12:'M (W)', 13:'N (WNW)', 14:'O (NW)', 15:'P (NNW)'}
+            return {k:v for k, v in zip(range(16), dir_with_letter)}
+        return {k:v for k, v in zip(range(divisions), ascii_uppercase[0:divisions])}
     else:
-        return {k:v for k,v in zip(range(divisions), [str(n) for n in range(divisions)])}
+        return {k:v for k, v in zip(range(divisions), [str(n) for n in range(divisions)])}
