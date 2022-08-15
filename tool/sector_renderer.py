@@ -106,7 +106,7 @@ class SectorRenderer():
         for i in range(16):
             center_feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(center_x, center_y)))
             coords = getGeodesicLineFeature(center_feature, 
-                radius + 25, units, azimuth, getCoords=True)
+                radius * 1.2, units, azimuth, getCoords=True)
             
             feature = QgsFeature()
             feature.setGeometry(QgsGeometry.fromPointXY(coords[-1]))
@@ -117,8 +117,8 @@ class SectorRenderer():
             azimuth += 22.5
 
         text_format = QgsTextFormat()
-        text_format.setFont(QFont("Arial", 12))
-        text_format.setSize(12)
+        text_format.setFont(QFont("Arial", 15, weight = QFont.Bold))
+        text_format.setSize(15)
         
         label_settings = QgsPalLayerSettings()
         label_settings.enabled = True
