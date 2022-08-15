@@ -161,15 +161,16 @@ class SectorRenderer():
             QgsProject.instance().addMapLayer(label_layer)
             label_id = label_layer.id()
 
-        self.setLayerCrs(points_layer, point_crs)
         self.inp_dialog.hide()
         self.iface.messageBar().pushMessage("Sectors Drawn",
                                            "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
-        query_places = QueryTool(self.iface, [center_x, center_y], 
-                radius, units, segments, self.divisions, self.division_length, sectors.id(), circle.id(), label_id, points_layer)
-        self.canvas.setExtent(label_layer.extent() if showLabels else circle.extent())
-        self.canvas.setMapTool(query_places)
+        if points_layer:
+            self.setLayerCrs(points_layer, point_crs)
+            query_places = QueryTool(self.iface, [center_x, center_y], 
+                    radius, units, segments, self.divisions, self.division_length, sectors.id(), circle.id(), label_id, points_layer)
+            self.canvas.setExtent(label_layer.extent() if showLabels else circle.extent())
+            self.canvas.setMapTool(query_places)
 
     def run(self):
         self.inp_dialog.exec_()
