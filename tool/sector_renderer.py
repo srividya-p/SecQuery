@@ -67,10 +67,12 @@ class SectorRenderer():
 
     def getSectorLineLayers(self, radius, center_x, center_y, azimuth, units = 1):
         line_layers = []
+        sector_angles = []
         center_feature = QgsFeature()
+        
         for n in range(self.divisions):
             center_feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(center_x, center_y)))
-            geodesic_line_feature = getGeodesicLineFeature(center_feature, 
+            geodesic_line_feature, angle = getGeodesicLineFeature(center_feature, 
                 radius, units, azimuth)
 
             line = getMemoryLayerFromFeatures(geodesic_line_feature, 
@@ -78,10 +80,11 @@ class SectorRenderer():
             
             styled_line = styleLayer(line, self.style)
             line_layers.append(styled_line)
+            sector_angles.append(angle)
             self.increaseProgress()
             azimuth += self.division_length
         
-        return line_layers
+        return line_layers, sector_angles
             
     def getMergedDiameters(self, line_layers):
         parameters = {
@@ -150,7 +153,8 @@ class SectorRenderer():
         QgsProject.instance().addMapLayer(circle)
         self.increaseProgress()
         
-        line_layers = self.getSectorLineLayers(radius, center_x, center_y, self.division_length / 2, units)
+        line_layers, sector_angles = self.getSectorLineLayers(radius, center_x, center_y, 
+            self.division_length / 2, units)
         sectors = self.getMergedDiameters(line_layers)
         QgsProject.instance().addMapLayer(sectors)
         self.increaseProgress()
@@ -163,12 +167,13 @@ class SectorRenderer():
 
         self.inp_dialog.hide()
         self.iface.messageBar().pushMessage("Sectors Drawn",
-                                           "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
+            "Click on the sector for which you want to query places.\nPress 'Q' to Quit.", level=Qgis.Success, duration=3)
 
         if points_layer:
             self.setLayerCrs(points_layer, point_crs)
             query_places = QueryTool(self.iface, [center_x, center_y], 
-                    radius, units, segments, self.divisions, self.division_length, sectors.id(), circle.id(), label_id, points_layer)
+                    radius, units, segments, self.divisions, self.division_length, sectors.id(), 
+                    sector_angles, circle.id(), label_id, points_layer)
             self.canvas.setExtent(label_layer.extent() if showLabels else circle.extent())
             self.canvas.setMapTool(query_places)
 

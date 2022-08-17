@@ -27,15 +27,14 @@ from qgis.gui import (QgsMapTool, QgsMapToolEmitPoint)
 from PyQt5.QtWidgets import (QMessageBox)
 
 import processing
-import math
-pi = math.pi
 
 from secquery.utils.geodesic_pie_wedge import getGeodesicPieWedgeFeature
+from secquery.utils.geodesic_line import getAngleWithVertical
 from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLayer, getLabelDict
 
 class QueryTool(QgsMapTool):
-    def __init__(self, iface, center_point, radius, units, segments, 
-                divisions, division_length, merged_diameters_id, circle_id, label_id, points_layer):
+    def __init__(self, iface, center_point, radius, units, segments, divisions, 
+                division_length, merged_diameters_id, sector_angles, circle_id, label_id, points_layer):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.center_x = center_point[0]
@@ -47,6 +46,7 @@ class QueryTool(QgsMapTool):
         self.division_length = division_length
         self.circle_id = circle_id
         self.merged_diameters_id = merged_diameters_id
+        self.sector_angles = sector_angles
         self.label_id = label_id
 
         self.sector_layer = QgsVectorLayer()
@@ -102,16 +102,15 @@ class QueryTool(QgsMapTool):
         self.sector_layer = styled_sector
 
     def identifySector(self, x, y):
-        dy = y - self.center_y
-        dx = x - self.center_x
-        angle = math.atan2(dx, dy)
-        angle += pi / self.divisions
-
-        if angle < 0:
-            angle += 2*pi
-
-        sector_num = int(angle//((2*pi) / self.divisions))
-        return sector_num
+        angle = getAngleWithVertical(self.center_x, self.center_y, x, y)
+        
+        if ((angle >= 0 and angle < self.sector_angles[0]) or 
+            (angle >= self.sector_angles[-1] and angle <= 360)):
+            return 0
+        
+        for i in range(self.divisions - 1):
+            if angle >= self.sector_angles[i] and angle < self.sector_angles[i + 1]:
+                return i + 1
 
     def generateQueriedPointsLayer(self, sector_name):
         layer_name = f'Sector {sector_name} Center ({self.center_x:.3f}, {self.center_y:.3f}) Points'
