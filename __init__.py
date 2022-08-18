@@ -24,6 +24,13 @@
  This script initializes the plugin, making it known to QGIS.
 """
 
+try:
+    import geographiclib
+except Exception:
+    import os
+    import site
+    site.addsitedir(os.path.abspath(os.path.dirname(__file__) + '/external_libs'))
+
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
