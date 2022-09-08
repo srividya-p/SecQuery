@@ -1,47 +1,30 @@
-# This file contains metadata for your plugin.
-
-# This file should be included when you package your plugin.# Mandatory items:
-
 [general]
 name=SecQuery
 qgisMinimumVersion=3.16
-description=This plugin is used to render a circle with 16 wind-rose sectors and query the data in them.
-version=0.1
+description=Render geodesic buffers with 4-32 sectors and query the point data in them.
+version=1.0.0
 author=Srividya Subramanian
 email=srividya.ssa@gmail.com
-
-about=This plugin takes in a Point Layer as input along with a specified radius and center point. It then renders a circle with 16 directional sectors and the user can query the point data in those sectors.
-
+about=SecQuery is a tool for rendering geodesic buffers with a 
+    specified number of sectors. Buffer radius can be specified 
+    in cm, m, km, in, ft, mi, nmi or yd. The number of sectors
+    and smoothness of buffer can be configured via user input. 
+    The tool also provides the functionality of displaying 16 
+    directional labels. The center point of the buffer can be
+    entered manually or selected from the canvas. The buffer, 
+    sectors and direction labels are added as Memory Layers. 
+    A Point Layer and a CRS for this Layer are taken as input. 
+    The data in a sector can be queried with a map tool which 
+    identifies a sector from mouse click coordinates. The 
+    queried data is added as a Memory Layer with Point data 
+    of selected sector.The attribute table for these layers 
+    are displayed. 
 tracker=https://github.com/srividya-p/SecQuery/issues
 repository=https://github.com/srividya-p/SecQuery
-# End of mandatory metadata
-
-# Recommended items:
-
-hasProcessingProvider=no
-# Uncomment the following line and add your changelog:
-# changelog=
-
-# Tags are comma separated with spaces allowed
 tags=python, point, join, circle, sector, select
-
-homepage=https://github.com/srividya-p/SecQuery/blob/main/README.md
-category=Plugins
+homepage=https://github.com/srividya-p/SecQuery
+category=Vector
 icon=icon.png
-# experimental flag
 experimental=False
-
-# deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
-
-# Since QGIS 3.8, a comma separated list of plugins to be installed
-# (or upgraded) can be specified.
-# Check the documentation for more information.
-# plugin_dependencies=
-
-Category of the plugin: Raster, Vector, Database or Web
-# category=
-
-# If the plugin can run on QGIS Server.
-server=False
-
+hasProcessingProvider=no
