@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+  <head>
+      <meta charset="utf-8">
+      <meta name="description" content="">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>SecQuery</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+      <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/railscasts.min.css">
+      <link rel="stylesheet" href="css/secquery-global.css">
+      <link rel="stylesheet" href="css/secquery-landing.css">
+      <link rel="icon" type="image/x-icon" href="images/icon.png">
+  </head>
+  <body>
+    <nav>
+      <div class="logo"></div>
+      <ul class="menu">
+        <div class="menu__item toggle"><span></span></div>
+        <li class="menu__item"><a href="doc.html" class="link link--dark"><i class="fa fa-book"></i> Documentation</a></li>
+        <li class="menu__item"><a href="https://github.com/srividya-p/SecQuery" class="link link--dark"><i class="fa fa-github"></i> Github</a></li>
+      </ul>
+    </nav>
+    <div class="hero">
+      <h1 class="hero__title">SecQuery</h1>
+      <p class="hero__description">Render geodesic buffers and query point data in sectors</p>
+    </div>
+    <div class="hero__terminal"></div>
+    <div class="wrapper">
+      <div class="author">
+        <h3 class="section__title">Author &emsp;
+          <a href="https://www.linkedin.com/in/srividya-subramanian/" class="link link--dark"><i class="fa fa-linkedin"></i></a> &nbsp;
+          <a href="https://github.com/srividya-p/SecQuery" class="link link--dark"><i class="fa fa-github"></i></a> &nbsp;
+          <a href="https://twitter.com/SrividyaPikapi" class="link link--dark"><i class="fa fa-twitter"></i></a>
+        </h3>
+        <p class="authorname">Srividya Subramanian</p>
+        <p>Software Engineer, Forcepoint</p>
+        <p>Mumbai, India</p>
+      </div>
+      <div class="about">
+        <h3 class="section__title">About the Plugin</h3>
+        <p>This QGIS plugin takes in a Point Layer as input along with a specified radius and center point.
+          It then renders geodesic buffers with a given number of sectors. The point data in those sectors
+          can be queried using a custom map tool. Geodesic buffers are rendered with the 
+          <a href="https://pypi.org/project/geographiclib/" class="link link--light">geographiclib</a> library.
+          The concept behind rendering the buffers was reffered from the 
+          <a href="https://plugins.qgis.org/plugins/shapetools/" class="link link--light">Shape Tools</a> plugin.
+          The smoothness of the buffers can also be configured. The queried point data is added as a new memory
+          layer, so that users have access to all the attributes selected sector area.
+        </p>
+      </div>
+      <div class="feature">
+        <div class="feature__item">
+          <h3 class="section__title">Geodesic Buffers</h3>
+          <p>Account for the earth's actual shape (an elipsoid or geoid) in the calculation of the buffer.</p>
+        </div>
+        <div class="feature__item">
+          <h3 class="section__title">Variable Sectors</h3>
+          <p>Specify required number of sectors between 4 and 32; Render geodesic radii to demarcate sectors.</p>
+        </div>
+        <div class="feature__item">
+          <h3 class="section__title">Multiple Radius Units</h3>
+          <p>Enter radius in centimeters, meters, kilometers, inches, feet, miles, nautical miles or yards.</p>
+        </div>
+        <div class="feature__item">
+          <h3 class="section__title">Map Select Center</h3>
+          <p>Select the buffer center from a map click (via a map tool) or enter the desired coordinates.</p>
+        </div>
+        <div class="feature__item">
+          <h3 class="section__title">Queried Data Output Layer</h3>
+          <p>Get data queried from a sector as separate memory layer with all attributes from input layer.</p>
+        </div>
+        <div class="feature__item">
+          <h3 class="section__title">Direction Labels</h3>
+          <p>Get labels for the 16 directions around the buffer; The directions are added as a new memory layer.
+          </p>
+        </div>
+      </div>
+      <div class="callout">
+        <p>Read the documentation for usage guidance</p>
+        <a href="doc.html" class="button--primary">Documentation</a>
+      </div>
+    </div>
+    <div class="changelog">
+      <div class="wrapper">
+        <h3 class="section__title">Changelog</h3>
+        <div class="changelog__item">
+          <div class="changelog__meta">
+            <h4 class="changelog__title">v1.0.0</h4>
+            <small class="changelog__date">24/08/2022</small>
+          </div>
+          <div class="changelog__detail">
+            <ul>
+              <li>First release of SecQuery Plugin.</li>
+              <li>Geodesic buffers and radii.</li>
+              <li>Specify radius in multiple units.</li>
+              <li>Variable number of sectors.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="changelog__callout">
+          <a href="https://github.com/srividya-p/SecQuery/releases" class="button--secondary">Checkout Full Log</a>
+        </div>
+      </div>
+    </div>
+    <footer class="footer"><a href="https://github.com/srividya-p/SecQuery" target="_blank" class="link link--light">SecQuery</a>, Copyright © Srividya Subramanian, 2022.</footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="js/secquery.js"></script>
+  </body>
+</html>

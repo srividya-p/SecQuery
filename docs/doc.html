@@ -1,0 +1,159 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SecQuery Documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
+    <link rel="stylesheet" href="css/secquery-global.css">
+    <link rel="stylesheet" href="css/secquery-doc.css">
+    <link rel="icon" type="image/x-icon" href="images/icon.png">
+  </head>
+  <body>
+    <div class="doc__bg"></div>
+    <nav class="header">
+      <h1 class="logo">SecQuery <span class="logo__thin">Doc</span></h1>
+      <ul class="menu">
+        <div class="menu__item toggle"><span></span></div>
+        <li class="menu__item"><a href="https://github.com/srividya-p/SecQuery" class="link link--dark"><i class="fa fa-github"></i> Github</a></li>
+        <li class="menu__item"><a href="index.html" class="link link--dark"><i class="fa fa-home"></i> Home</a></li>
+      </ul>
+    </nav>
+    <div class="wrapper">
+      <aside class="doc__nav">
+        <ul>
+          <li class="js-btn selected">Installation</li>
+          <li class="js-btn">Input Parameters</li>
+          <li class="js-btn">Point Layer</li>
+          <li class="js-btn">Sector Generation</li>
+          <li class="js-btn">Query Sector Tool</li>
+          <li class="js-btn">Output Layers</li>
+          <li class="js-btn">Shortcuts</li>
+        </ul>
+      </aside>
+      <article class="doc__content">
+        <section class="js-section">
+          <h3 class="section__title">Installation</h3>
+          <p>SecQuery can be installed from the Plugins > Manage and Install Plugins option on the QGIS menu.</p>
+          <img src="images/plugin_menu.png" class="image-style">
+          <p>Upon installation the plugin can be accessed from the Vector menu and it is also added as a dock widget.</p>
+          <img src="images/secquery_vector_menu.png" class="image-style">
+          <hr />
+        </section>
+        <section class="js-section">
+          <h3 class="section__title">Input Parameters</h3>
+          <p>SecQuery needs radius and center point input for rendering buffers along with a point layer for querying data. The plugin also offers a few optional customizations. The full list of input parameters is described in the following table.</p>
+          <div class="table-wrapper">
+            <table>
+              <tr>
+                <th>Field</th>
+                <th>Description</th>
+                <th>Default</th>
+              </tr>
+              <tr>
+                <td>Radius Value</td>
+                <td>Inputs the radius for buffer.</td>
+                <td>200.000</td>
+              </tr>
+              <tr>
+                <td>Radius Units</td>
+                <td>Inputs the units for radius. <br> Options = [centimeters, meters, kilometers, inches, feet, miles, nautical miles, yards]</td>
+                <td>Meters</td>
+              </tr>
+              <tr>
+                <td>No. of Sectors</td>
+                <td>Inputs number of sectors to render (between 4 and 32).</td>
+                <td>16</td>
+              </tr>
+              <tr>
+                <td>Buffer Segments</td>
+                <td>Adjust buffer smoothness by changing number of segments (More segments yield smoother arcs).</td>
+                <td>30</td>
+              </tr>
+              <tr>
+                <td>Direction Labels</td>
+                <td>Specify if a layer with direction labels should be added.</td>
+                <td>false</td>
+              </tr>
+              <tr>
+                <td>Points Layer</td>
+                <td>Inputs a points layer for querying.</td>
+                <td>&lt;First layer with type='Point'&gt;</td>
+              </tr>
+              <tr>
+                <td>Layer CRS</td>
+                <td>Sets the CRS of the input Points Layer.</td>
+                <td>EPSG:4326 WGS-84</td>
+              </tr>
+              <tr>
+                <td>X Coordinate</td>
+                <td>Inputs the center X Coordinate.</td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>Y Coordinate</td>
+                <td>Inputs the center Y Coordinate.</td>
+                <td>-</td>
+              </tr>
+            </table>
+          </div>
+          <p>The following image displays the SecQuery input window. The direction labels can be enabled and disabled via a checkbox. The user may select the center point of the buffer with a map tool or enter them manually.</p>
+          <img src="images/secquery_input_window.png" class="image-style">
+          <hr />
+        </section>
+        <section class="js-section">
+          <h3 class="section__title">Point Layer</h3>
+          <p>The point layer input can be selected from the Vector layer dropdown which loads in the vector layers of type=Point that are present in the QGIS project. The CRS for this layer can be set with the Select CRS option. Default CRS is considered as EPSG:4326 - WGS 84.</p>
+          <img src="images/point_layer_input.png" class="image-style-sm">
+          <hr />
+        </section>
+        <section class="js-section">
+          <h3 class="section__title">Sector Generation</h3>
+          <p>Buffers and sectors rendered by SecQuery are geodesic ie. when the tool generates buffers, distances are measured between two points on a globe. This accounts for the earth's actual shape (a geoid). The following image depicts buffers generated at [A] an area close to the equator and [B] an area close to the pole.</p>
+          <img src="images/sectors.png" class="image-style-lg">
+          <p>The tool can also generate a user defined number of sectors, between 4 and 32, as depicted below.</p>
+          <img src="images/sector_numbers.png" class="image-style-lg">
+          <hr />
+        </section>
+        <section class="js-section">
+          <h3 class="section__title">Query Sector Tool</h3>
+          <p>For querying point data in sectors, a map tool is used which determines the angle of the user's mouse click with the Y Axis to identify the sector number. The queried points are recorded as a new point layer (highlighted in orange) as shown below.</p>
+          <img src="images/queried_point_layer.png" class="image-style">
+          <p>The fields present in the queried data are also displayed via the layer's attribute table.</p>
+          <img src="images/attribute_table.png" class="image-style-lg">
+          <hr />
+        </section>
+        <section class="js-section">
+          <h3 class="section__title">Output Layers</h3>
+          <p>All the output layers are added as Memory layers. This gives the user freedom to either save them at their desired location from the layer menu or discard them. The output layers are named according to the data they represent and only the currently selected point layer is displayed on the canvas.</p>
+          <img src="images/layers.png" class="image-style-sm">
+          <hr />
+        </section>
+        <section class="js-section">
+          <h3 class="section__title">Shortcuts</h3>
+          <p>The shortcuts displayed below can be used to pan or zoom on the map canvas while the tool is active. The Quit option provides a functionality to clear all scratch layers. However, this operation will not be carried out unless the user confirms the same.</p>
+        <div class="keybinding">
+          <ul class="keybinding__detail">
+            <h3 class="keybinding__title">Zoom</h3>
+            <li>Zoom In <span class="keybinding__label">Ctrl + Scroll In</span></li>
+            <li>Zoom Out <span class="keybinding__label">Ctrl + Scroll Out</span></li>
+          </ul>
+          <ul class="keybinding__detail">
+            <h3 class="keybinding__title">General</h3>
+            <li><span class="keybinding__label"> &lt;Hover Mouse & Zoom&gt;</span> Pan to a location</li>
+            <li><span class="keybinding__label"> Q</span> Unset map tool and Quit Plugin</li>
+          </ul>
+        </div>
+          <hr />
+        </section>
+      </article>
+    </div>
+
+    <footer class="footer"><a href="https://github.com/srividya-p/SecQuery" target="_blank" class="link link--light">SecQuery</a>, Copyright © Srividya Subramanian, 2022.</footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="js/secquery.js"></script>
+  </body>
+</html>
