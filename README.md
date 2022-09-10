@@ -8,7 +8,7 @@ This QGIS plugin takes in a Point Layer as input along with a specified radius a
 ### 🌎 Geodesic Buffers
 Account for the earth's actual shape (an elipsoid or geoid) in the calculation of the buffer.
 
-### ◕ Variable Sectors
+### ✻ Variable Sectors
 Specify required number of sectors between 4 and 32; Render geodesic radii to demarcate sectors.
 
 ### 📍 Multiple Radius Units
@@ -22,3 +22,6 @@ Get data queried from a sector as separate memory layer with all attributes from
 
 ### 🧭 Direction Labels
 Get labels for the 16 directions around the buffer; The directions are added as a new memory layer.
+
+## Documentation
+### *Read the full documentation [here](https://srividya-p.github.io/SecQuery/)*
