@@ -79,18 +79,20 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.accepted.connect(self.emitInputData)
 
         self.textShortHelp.setText("<h1>SecQuery</h1> <b>General:</b><br>"\
-                "This algorithm implements the Dijkstra-Search to return the <b>shortest path between two points</b> on a given <b>network dataset</b>.<br>"\
-                "It accounts for <b>points outside of the network</b> (eg. <i>non-network-elements</i>) and calculates "\
-                "<b>separate entry-</b> and <b>exit-costs</b>. Distances are measured accounting for <b>ellipsoids</b>.<br><br>"\
+                "This tool is used to render geodesic buffers with a specified number of sectors and query the point data in them."\
+                "Buffer radius can be specified in cm, m, km, in, ft, mi, nmi or yd."\
+                "The tool also provides the functionality of displaying 16 directional labels." \
+                "The buffer, sectors and direction labels are added as Memory Layers.<br><br>"\
                 "<b>Parameters (required):</b><br>"\
-                "Following Parameters must be set to run the algorithm:"\
-                "<ul><li>Network Layer</li><li>Startpoint Coordinates</li><li>Endpoint Coordinates</li><li>Cost Strategy</li></ul><br>"\
+                "Following Parameters must be set to run the tool:"\
+                "<ul><li>Radius</li><li>Radius Units</li><li>Number of Sectors</li><li>Center Coordinates</li><li>Point Layer</li></ul><br>"\
                 "<b>Parameters (optional):</b><br>"\
-                "There are also a number of <i>optional parameters</i> to implement <b>direction dependent</b> shortest paths and provide information on <b>speeds</b> on the networks edges."\
-                "<ul><li>Direction Field</li><li>Value for forward direction</li><li>Value for backward direction</li><li>Value for both directions</li><li>Default direction</li><li>Speed Field</li><li>Default Speed (affects entry/exit costs)</li><li>Topology tolerance</li></ul><br>"\
+                "There are also a number of <i>optional parameters which can be set:"\
+                "<ul><li>Show direction label flag</li><li>Buffer Segments</li><li>Point Layer CRS</li></ul><br>"\
                 "<b>Output:</b><br>"\
-                "The output of the algorithm is a Layer containing a <b>single linestring</b>, the attributes showcase the"\
-                "<ul><li>Name and coordinates of startpoint</li><li>Name and coordinates of endpoint</li><li>Entry-cost to enter network</li><li>Exit-cost to exit network</li><li>Cost of shortest path on graph</li><li>Total cost as sum of all cost elements</li></ul>")
+                "The output of the tool are two Layers - Buffer and Sectors. A map tool is also set to query the data in these sectors." \
+                "The queried data is added as a Memory layer."
+        )
 
     def isCenterValid(self, centerXText, centerYText):
         if centerXText == '' or centerYText == '':
