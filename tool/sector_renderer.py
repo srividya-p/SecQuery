@@ -3,8 +3,8 @@
 /***************************************************************************
  SectorRenderer 
  SecQuery - A QGIS plugin
- This plugin is used to render a circle with 16 wind-rose sectors and query 
- the data in them.
+ This plugin is used to render a geodesic buffers with a specified number of 
+ sectors and query the point data in them.
         begin                : 2022-07-31
         git sha              : $Format:%H$
         copyright            : (C) 2022 by Srividya Subramanian
@@ -39,6 +39,9 @@ from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLa
 
 class SectorRenderer():
     def __init__(self, iface):
+        """
+        Init SectorRenderer
+        """
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.inp_dialog = InputDialog(self.canvas)
@@ -49,10 +52,16 @@ class SectorRenderer():
         self.division_length = 0.0
     
     def increaseProgress(self):
+        """
+        Method to set progress in Progress Bar UI
+        """
         self.progress += 10
         self.inp_dialog.progressBar.setValue(self.progress)
 
     def getCircleLayer(self, radius, center_x, center_y, units = 1, segments = 30, startAzimuth = 0, endAzimuth = 360):
+        """
+        Method to get a geodesic buffer from utils.geodesic_pie_wedge
+        """
         center_feature = QgsFeature()
         center_feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(center_x, center_y)))
         geodesic_center_feature = getGeodesicPieWedgeFeature(center_feature, radius, 
@@ -66,6 +75,9 @@ class SectorRenderer():
         return styled_circle
 
     def getSectorLineLayers(self, radius, center_x, center_y, azimuth, units = 1):
+        """
+        Method to get geodesic diameters from utils.geodesic_line
+        """
         line_layers = []
         sector_angles = []
         center_feature = QgsFeature()
@@ -87,6 +99,9 @@ class SectorRenderer():
         return line_layers, sector_angles
             
     def getMergedDiameters(self, line_layers):
+        """
+        Method to merge diameters into a single layer
+        """
         parameters = {
             'LAYERS': line_layers, 
             'OUTPUT': "memory:Sectors"
@@ -99,6 +114,9 @@ class SectorRenderer():
         return sectors
 
     def getDirectionLabels(self, radius, center_x, center_y, units = 1, azimuth = 0):
+        """
+        Method to get a layer with 16 Direction Labels
+        """
         center_feature = QgsFeature()
         direction_layer = QgsVectorLayer('Point', 'Directions', 'memory')
         direction_provider = direction_layer.dataProvider()
@@ -140,12 +158,18 @@ class SectorRenderer():
         return direction_layer
 
     def setLayerCrs(self, points_layer, point_crs):
+        """
+        Method to set the CRS of the input Point layer
+        """
         if not point_crs.isValid():
             defaultCrs = QgsCoordinateReferenceSystem('EPSG:4326')
             points_layer.setCrs(defaultCrs, True)
         points_layer.setCrs(point_crs, True)
 
     def processInputDataSignal(self, radius, units, noOfSectors, segments, showLabels, points_layer, point_crs, center_x, center_y):
+        """
+        Method to process input data from Input window upon clicking 'Generate Sectors'
+        """
         self.divisions = noOfSectors
         self.division_length = 360.0 / noOfSectors
         
@@ -178,4 +202,7 @@ class SectorRenderer():
             self.canvas.setMapTool(query_places)
 
     def run(self):
+        """
+        Method to display Input window
+        """
         self.inp_dialog.exec_()

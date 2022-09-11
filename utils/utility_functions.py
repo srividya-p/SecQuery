@@ -1,3 +1,26 @@
+# -*- coding: utf-8 -*-
+"""
+/***************************************************************************
+ Utility Methods (Misc) 
+ SecQuery - A QGIS plugin
+ This plugin is used to render a geodesic buffers with a specified number of 
+ sectors and query the point data in them.
+        begin                : 2022-07-31
+        git sha              : $Format:%H$
+        copyright            : (C) 2022 by Srividya Subramanian
+        email                : srividya.ssa@gmail.com
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+"""
+
 from string import ascii_uppercase
 from qgis.core import (QgsUnitTypes, QgsVectorLayer, QgsFillSymbol)
 from qgis.PyQt.QtCore import QCoreApplication
@@ -10,6 +33,9 @@ UNITS_LABELS = [tr("Centimeters"), tr("Meters"), tr("Kilometers"), tr("Inches"),
 DIRECTION_LIST = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 
 def conversionFactorToMeters(units):
+    """
+    Method to get conversion factor of a given units to meters
+    """
     # Centimeters
     if units == 0:
         measureFactor = QgsUnitTypes.fromUnitToUnitFactor(QgsUnitTypes.DistanceCentimeters, QgsUnitTypes.DistanceMeters)
@@ -37,6 +63,9 @@ def conversionFactorToMeters(units):
     return measureFactor
 
 def hasIntDateLineCrossing(points):
+    """
+    Method to check if a points list has points that cross the International Date Line
+    """
     points_len = len(points)
     if points_len == 0:
         return False 
@@ -50,6 +79,9 @@ def hasIntDateLineCrossing(points):
     return False
 
 def makeIntDateLineCrossingsPositive(points):
+    """
+    Method to make points crossing the International Date Line positive in a points list
+    """
     if not hasIntDateLineCrossing(points):
         return
     for point in points:
@@ -57,6 +89,9 @@ def makeIntDateLineCrossingsPositive(points):
             point.setX(x + 360)
 
 def getMemoryLayerFromFeatures(feature, layerType, layerName):
+    """
+    Utility method to get a memory layer from features
+    """
     layer = QgsVectorLayer(layerType, layerName, "memory")
     provider = layer.dataProvider()
     layer.startEditing()
@@ -65,12 +100,18 @@ def getMemoryLayerFromFeatures(feature, layerType, layerName):
     return layer
 
 def styleLayer(layer, style):
+    """
+    Utility method to style a layer with the given style string
+    """
     symbol = QgsFillSymbol.createSimple(style)
     layer.renderer().setSymbol(symbol)
     layer.triggerRepaint()
     return layer
 
 def getLabelDict(divisions):
+    """
+    Utility method to get sector labels for the given number of sectors
+    """
     if divisions < 27:
         if divisions == 4:
             dir_with_letter = [f'{l} ({d})' for l, d in zip(ascii_uppercase[0:4], 

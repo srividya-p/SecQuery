@@ -3,8 +3,8 @@
 /***************************************************************************
  QueryTool 
  SecQuery - A QGIS plugin
- This plugin is used to render a circle with 16 wind-rose sectors and query 
- the data in them.
+ This plugin is used to render a geodesic buffers with a specified number of 
+ sectors and query the point data in them.
         begin                : 2022-07-31
         git sha              : $Format:%H$
         copyright            : (C) 2022 by Srividya Subramanian
@@ -35,6 +35,9 @@ from secquery.utils.utility_functions import getMemoryLayerFromFeatures, styleLa
 class QueryTool(QgsMapTool):
     def __init__(self, iface, center_point, radius, units, segments, divisions, 
                 division_length, merged_diameters_id, sector_angles, circle_id, label_id, points_layer):
+        """
+        Init Query Tool with input data recieved from SectorRenderer
+        """
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.center_x = center_point[0]
@@ -59,6 +62,9 @@ class QueryTool(QgsMapTool):
         QgsMapToolEmitPoint.__init__(self, self.canvas)
 
     def clearCanvas(self):
+        """
+        Utility method to clear the Map Canvas
+        """
         QgsProject.instance().removeMapLayer(self.circle_id)
         QgsProject.instance().removeMapLayer(self.merged_diameters_id)
         if self.label_id:
@@ -67,16 +73,25 @@ class QueryTool(QgsMapTool):
             QgsProject.instance().removeMapLayer(layer_id)
 
     def clearSector(self):
+        """
+        Method to clear a highlighted/selected sector on new mouse click
+        """
         if self.sector_layer.id():
             QgsProject.instance().removeMapLayer(self.sector_layer.id())
             self.sector_layer = QgsVectorLayer()
 
     def hidePrevQueriedPointLayer(self):
+        """
+        Method to ensure only one Queried Point layer is present on canvas
+        """
         if self.prev_id != None:
             prevLayer = QgsProject.instance().layerTreeRoot().findLayer(self.prev_id)
             prevLayer.setItemVisibilityChecked(False)
 
     def getAzimuthRangeFromSectorNumber(self, n):
+        """
+        Utility Method to get start and end azimuth from sector number
+        """
         startAzimuth = n * self.division_length - self.division_length / 2
         endAzimuth = n * self.division_length + self.division_length / 2
 
@@ -86,6 +101,9 @@ class QueryTool(QgsMapTool):
         return startAzimuth, endAzimuth
 
     def drawSector(self, n, sector_name):
+        """
+        Method to render a geodesic sector (highlight the selected sector)
+        """
         center_feature = QgsFeature()
         center_feature.setGeometry(QgsGeometry.fromPointXY(
             QgsPointXY(self.center_x, self.center_y)))
@@ -102,6 +120,9 @@ class QueryTool(QgsMapTool):
         self.sector_layer = styled_sector
 
     def identifySector(self, x, y):
+        """
+        Method to determine sector number from mouse click coordinates
+        """
         angle = getAngleWithVertical(self.center_x, self.center_y, x, y)
         
         if ((angle >= 0 and angle < self.sector_angles[0]) or 
@@ -113,6 +134,9 @@ class QueryTool(QgsMapTool):
                 return i + 1
 
     def generateQueriedPointsLayer(self, sector_name):
+        """
+        Method to generate a new Point Layer with the data queried from selected sector
+        """
         layer_name = f'Sector {sector_name} Center ({self.center_x:.3f}, {self.center_y:.3f}) Points'
         existing_layers = QgsProject.instance().mapLayersByName(layer_name)
 
@@ -154,6 +178,9 @@ class QueryTool(QgsMapTool):
         self.iface.showAttributeTable(sector_points)        
         
     def canvasPressEvent(self, e):
+        """
+        Handle canvas press event
+        """
         self.clearSector()
         self.hidePrevQueriedPointLayer()
 
@@ -166,6 +193,9 @@ class QueryTool(QgsMapTool):
         self.generateQueriedPointsLayer(sector_name)
 
     def keyReleaseEvent(self, e):
+        """
+        Handle key release event
+        """
         try:
             if(chr(e.key()) == 'Q'):
                 ret = QMessageBox.question(None, '', "Do you want to clear all Scratch Layers before quitting?", 

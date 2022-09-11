@@ -1,3 +1,26 @@
+# -*- coding: utf-8 -*-
+"""
+/***************************************************************************
+ Utility Method - Get Geodesic Line 
+ SecQuery - A QGIS plugin
+ This plugin is used to render a geodesic buffers with a specified number of 
+ sectors and query the point data in them.
+        begin                : 2022-07-31
+        git sha              : $Format:%H$
+        copyright            : (C) 2022 by Srividya Subramanian
+        email                : srividya.ssa@gmail.com
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+"""
+
 import math
 from geographiclib.geodesic import Geodesic
 
@@ -10,6 +33,9 @@ maxSegments = 1000
 maxSegmentLength = 20 * 1000.0
 
 def getAngleWithVertical(x1, y1, x2, y2):
+    """
+    Method to get the angle a point makes with the Y Axis
+    """
     dy = y2 - y1
     dx = x2 - x1
     angle = math.atan2(dx, dy)
@@ -20,6 +46,9 @@ def getAngleWithVertical(x1, y1, x2, y2):
     return math.degrees(angle)
 
 def getGeodesicLineFeature(lineStartFeature, length, units, azimuth, getCoords=False):
+    """
+    Method to get a geodesic line feature from line start, length and azimuth
+    """
     length_meters = length * conversionFactorToMeters(units)
     point = lineStartFeature.geometry().asPoint()
 

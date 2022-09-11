@@ -3,8 +3,8 @@
 /***************************************************************************
  InputDialog 
  SecQuery - A QGIS plugin
- This plugin is used to render a circle with 16 wind-rose sectors and query 
- the data in them.
+ This plugin is used to render a geodesic buffers with a specified number of 
+ sectors and query the point data in them.
         begin                : 2022-07-31
         git sha              : $Format:%H$
         copyright            : (C) 2022 by Srividya Subramanian
@@ -43,7 +43,9 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
     inputDataSignal = pyqtSignal(float, int, int, int, bool, QgsVectorLayer, QgsCoordinateReferenceSystem, float, float)
 
     def __init__(self, canvas, parent=None):
-        """Constructor."""
+        """
+        Init InputDialog
+        """
         super(InputDialog, self).__init__(parent)
         self.setupUi(self)
 
@@ -95,6 +97,9 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         )
 
     def isCenterValid(self, centerXText, centerYText):
+        """
+        Method to check if manually entered center coordinates are valid
+        """
         if centerXText == '' or centerYText == '':
             self.statusLabel.setText('Please select a center point.')
             self.statusLabel.setStyleSheet('color: red')
@@ -103,17 +108,26 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         return True, float(centerXText), float(centerYText)
 
     def mapClick(self):
+        """
+        Method to set MapTool
+        """
         self.statusLabel.setText('')
         self.hide()
         self.canvas.setMapTool(self.pointTool)
 
     def getPoint(self, point):
+        """
+        Method to get map click coordinates via MapTool
+        """
         self.show()
         self.centerXInput.setText(str(point[0]))
         self.centerYInput.setText(str(point[1]))
         self.canvas.unsetMapTool(self.pointTool)
 
     def emitInputData(self):
+        """
+        Method to call processInputDataSignal with required input fields
+        """
         radius = self.radiusInput.value()
         units = self.unitsCombobox.currentIndex()
         noOfSectors = self.noOfSectorsInput.value()
@@ -131,5 +145,8 @@ class InputDialog(QtWidgets.QDialog, FORM_CLASS):
         self.inputDataSignal.emit(radius, units, noOfSectors, segments, showLabels, pointsLayer, pointCrs, centerX, centerY)
     
     def closeEvent(self, event):
+        """
+        Handle close event
+        """
         self.closingPlugin.emit()
         event.accept()

@@ -3,8 +3,8 @@
 /***************************************************************************
  SecQueryDockWidget 
  SecQuery - A QGIS plugin
- This plugin is used to render a circle with 16 wind-rose sectors and query 
- the data in them.
+ This plugin is used to render a geodesic buffers with a specified number of 
+ sectors and query the point data in them.
         begin                : 2022-07-31
         git sha              : $Format:%H$
         copyright            : (C) 2022 by Srividya Subramanian
@@ -34,10 +34,15 @@ class SecQueryDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     closingPlugin = pyqtSignal()
 
     def __init__(self, parent=None):
-        """Constructor."""
+        """
+        Init DockWidget
+        """
         super(SecQueryDockWidget, self).__init__(parent)
         self.setupUi(self)
 
     def closeEvent(self, event):
+        """
+        Handle close event
+        """
         self.closingPlugin.emit()
         event.accept()
